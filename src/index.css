@@ -412,6 +412,26 @@ body {
   background: rgba(51, 65, 85, 0.9);
 }
 
+.drawer__about {
+  margin-top: auto;
+  padding: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.drawer__about-title {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  color: #93c5fd;
+  font-weight: 600;
+}
+
+.drawer__about-text {
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: #94a3b8;
+}
+
 /* Bottom sheets */
 .sheet__backdrop {
   position: fixed;

@@ -67,6 +67,22 @@ export function SideDrawer({
             Income
           </button>
         </nav>
+        <div className="drawer__about">
+          <p className="drawer__about-title">About</p>
+          <p className="drawer__about-text">
+            Expendfy is a personal expense tracking app designed to help you stay on top of your spending  simply and
+            visually.
+            <br />
+            Built with focus, shipped with purpose.
+            <br />
+            <br />
+            Made by
+            <br />
+            Mushfiqur Rahman Faiyaz
+            <br />
+            © 2026 RanFy Inc. All rights reserved.
+          </p>
+        </div>
       </aside>
     </>
   )
