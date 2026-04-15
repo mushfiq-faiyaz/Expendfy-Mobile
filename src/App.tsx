@@ -130,6 +130,14 @@ export default function App() {
 
     return ''
   })()
+  const selectedDateLabel = useMemo(() => {
+    const d = parseISODate(selectedDate)
+    return new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(d)
+  }, [selectedDate])
   const formatMoney = useMemo(() => {
     const locale = currency === 'BDT' ? 'en-BD' : undefined
     const formatter = new Intl.NumberFormat(locale, {
@@ -287,6 +295,7 @@ export default function App() {
   return (
     <div className="app">
       <Header
+        selectedDateLabel={selectedDateLabel}
         monthlySpent={monthlySpent}
         monthlyIncome={monthlyIncome}
         averageExpense={averageExpense}

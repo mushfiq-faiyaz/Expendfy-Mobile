@@ -1,6 +1,7 @@
 import { ExpendfyLogo } from './ExpendfyLogo'
 
 type Props = {
+  selectedDateLabel: string
   monthlySpent: number
   monthlyIncome: number
   averageExpense: number
@@ -14,6 +15,7 @@ type Props = {
 }
 
 export function Header({
+  selectedDateLabel,
   monthlySpent,
   monthlyIncome,
   averageExpense,
@@ -43,6 +45,7 @@ export function Header({
       </div>
       <div className="app-header__meta">
         <div className="app-header__leftStats">
+          <p className="app-header__date">{selectedDateLabel}</p>
           <button
             type="button"
             className={`app-header__pick ${cellMode === 'day' ? 'app-header__pick--on' : ''}`}
@@ -50,7 +53,7 @@ export function Header({
           >
             <span className="app-header__pick-box" />
             <span className="app-header__stat app-header__stat--today">
-            Day expense: {formatMoney(dayCost)}
+              Spent: {formatMoney(dayCost)}
             </span>
           </button>
           <p className="app-header__stat app-header__stat--avg">
@@ -72,11 +75,12 @@ export function Header({
           </button>
         </div>
         <div className="app-header__stats">
+          <p className="app-header__stat app-header__stat--monthly">Monthly</p>
           <p className="app-header__stat app-header__stat--spent">
-            Monthly total spent: {formatMoney(monthlySpent)}
+            Spent: {formatMoney(monthlySpent)}
           </p>
           <p className="app-header__stat app-header__stat--income">
-            Monthly income: {formatMoney(monthlyIncome)}
+            Income: {formatMoney(monthlyIncome)}
           </p>
         </div>
       </div>

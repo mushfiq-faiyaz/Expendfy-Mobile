@@ -86,6 +86,12 @@ body {
   min-width: 0;
 }
 
+.app-header__date {
+  margin: 0 0 4px;
+  font-size: 0.8rem;
+  color: #f8fafc;
+}
+
 .app-header__pick {
   border: none;
   background: transparent;
@@ -117,11 +123,17 @@ body {
 
 .app-header__stat {
   margin: 0 0 2px;
-  font-size: 0.8rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.app-header__stat--monthly {
+  color: #facc15;
+  font-weight: 700;
 }
 
 .app-header__stat--spent {
-  color: #facc15;
+  color: #ffffff;
 }
 
 .app-header__stat--income {
