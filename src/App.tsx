@@ -9,6 +9,11 @@ import { loadExpenses, loadIncome, saveExpenses, saveIncome } from './storage'
 import { daysInMonth, parseISODate, startOfToday, toISODate } from './dateUtils'
 import type { Expense, IncomeEntry } from './types'
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
+}
+
 function newId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
@@ -72,6 +77,8 @@ export default function App() {
   const [expenseSheetOpen, setExpenseSheetOpen] = useState(false)
   const [incomeSheetOpen, setIncomeSheetOpen] = useState(false)
   const [quickEntryOpen, setQuickEntryOpen] = useState(true)
+  const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null)
+  const [installPromptDismissed, setInstallPromptDismissed] = useState(false)
   const [cellMode, setCellMode] = useState<'day' | 'over'>('day')
   const [nowMs, setNowMs] = useState(() => Date.now())
 
@@ -158,6 +165,36 @@ export default function App() {
     const id = window.setInterval(() => setNowMs(Date.now()), 1000)
     return () => window.clearInterval(id)
   }, [])
+
+  useEffect(() => {
+    const onBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault()
+      setInstallPromptEvent(event as BeforeInstallPromptEvent)
+      setInstallPromptDismissed(false)
+    }
+
+    const onInstalled = () => {
+      setInstallPromptEvent(null)
+      setInstallPromptDismissed(true)
+    }
+
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
+    window.addEventListener('appinstalled', onInstalled)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt)
+      window.removeEventListener('appinstalled', onInstalled)
+    }
+  }, [])
+
+  async function handleInstallClick(): Promise<void> {
+    if (!installPromptEvent) return
+    await installPromptEvent.prompt()
+    const choice = await installPromptEvent.userChoice
+    if (choice.outcome === 'accepted') {
+      setInstallPromptEvent(null)
+    }
+  }
 
   function handleDoubleTapDate(dateIso: string): void {
     if (dateIso !== todayIso) return
@@ -319,6 +356,32 @@ export default function App() {
         onDeleteIncome={deleteIncome}
         onCurrencyChange={handleCurrencyChange}
       />
+
+      {installPromptEvent && !installPromptDismissed ? (
+        <button
+          type="button"
+          onClick={() => {
+            void handleInstallClick()
+          }}
+          aria-label="Install app"
+          style={{
+            position: 'fixed',
+            right: '16px',
+            bottom: '16px',
+            zIndex: 9999,
+            border: 0,
+            borderRadius: '999px',
+            padding: '10px 16px',
+            fontWeight: 700,
+            backgroundColor: '#1f6feb',
+            color: '#fff',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+            cursor: 'pointer',
+          }}
+        >
+          Install App
+        </button>
+      ) : null}
     </div>
   )
 }
