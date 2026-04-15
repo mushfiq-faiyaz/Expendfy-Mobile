@@ -64,6 +64,8 @@ export default function App() {
 
   const today = new Date()
   const todayIso = toISODate(today)
+  const todayYear = today.getFullYear()
+  const todayMonth = today.getMonth()
   const CURRENCY_KEY = 'expendfy_currency'
   const CURRENCY_OPTIONS = ['TRY', 'USD', 'EUR', 'GBP', 'INR', 'JPY', 'AED', 'BDT'] as const
   const [expenses, setExpenses] = useState<Expense[]>(() => loadExpenses())
@@ -205,6 +207,12 @@ export default function App() {
     setQuickEntryOpen(true)
   }
 
+  function jumpToTodayContext(): void {
+    setSelectedDate(todayIso)
+    setViewYear(todayYear)
+    setViewMonth(todayMonth)
+  }
+
   function addExpense(description: string, amount: number): void {
     setExpenses((prev) => {
       const normalized = description.trim()
@@ -310,8 +318,14 @@ export default function App() {
       <SideDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        onPickExpense={() => setExpenseSheetOpen(true)}
-        onPickIncome={() => setIncomeSheetOpen(true)}
+        onPickExpense={() => {
+          jumpToTodayContext()
+          setExpenseSheetOpen(true)
+        }}
+        onPickIncome={() => {
+          jumpToTodayContext()
+          setIncomeSheetOpen(true)
+        }}
         currency={currency}
         currencyOptions={[...CURRENCY_OPTIONS]}
         onCurrencyChange={handleCurrencyChange}
