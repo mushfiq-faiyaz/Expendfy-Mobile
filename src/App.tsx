@@ -7,6 +7,7 @@ import { QuickEntryModal } from './components/QuickEntryModal'
 import { SideDrawer } from './components/SideDrawer'
 import { loadExpenses, loadIncome, saveExpenses, saveIncome } from './storage'
 import { daysInMonth, parseISODate, startOfToday, toISODate } from './dateUtils'
+import { useNotification } from './hooks/useNotification'
 import type { Expense, IncomeEntry } from './types'
 
 type BeforeInstallPromptEvent = Event & {
@@ -59,6 +60,8 @@ function nextAutoLabel(
 }
 
 export default function App() {
+  useNotification()
+
   const today = new Date()
   const todayIso = toISODate(today)
   const CURRENCY_KEY = 'expendfy_currency'
