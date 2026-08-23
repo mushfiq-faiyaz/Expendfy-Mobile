@@ -429,12 +429,15 @@ body {
   bottom: 0;
   z-index: 50;
   width: min(78vw, 280px);
-  background: rgba(10, 18, 35, 0.92);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-right: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: 12px 0 40px rgba(0, 0, 0, 0.50);
-  animation: drawer-in 0.22s ease-out;
+  /* stronger glass — match Quick Entry modal depth */
+  background: rgba(10, 16, 32, 0.90);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border-right: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow:
+    16px 0 48px rgba(0, 0, 0, 0.60),
+    1px 0 0 rgba(255, 255, 255, 0.05) inset;
+  animation: drawer-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
 }
@@ -452,54 +455,71 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  font-weight: 600;
+  padding: 18px 16px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  color: #f1f5f9;
 }
 
 .drawer__close {
-  border: none;
-  background: transparent;
-  color: #64748b;
-  font-size: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(51, 65, 85, 0.45);
+  backdrop-filter: blur(8px);
+  color: #94a3b8;
+  font-size: 1.2rem;
   line-height: 1;
   cursor: pointer;
-  padding: 4px 8px;
-  transition: color 0.15s;
+  padding: 4px 9px 5px;
+  border-radius: 8px;
+  transition: background 0.15s, color 0.15s;
 }
 
 .drawer__close:hover {
-  color: #94a3b8;
+  background: rgba(71, 85, 105, 0.65);
+  color: #f1f5f9;
 }
 
 .drawer__nav {
   display: flex;
   flex-direction: column;
-  padding: 12px;
+  padding: 14px 14px 6px;
   gap: 8px;
 }
 
 .drawer__currency {
-  padding: 12px 12px 0;
+  padding: 14px 14px 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .drawer__currency-label {
-  font-size: 0.78rem;
-  color: #93c5fd;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #60a5fa;
 }
 
+/* Glass card wrapping the currency dropdown — like a settings row */
 .drawer__currency-select {
   width: 100%;
   border-radius: var(--radius-input);
   border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(22, 32, 52, 0.75);
+  background: rgba(22, 33, 54, 0.70);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: #f8fafc;
-  padding: 10px 12px;
+  padding: 12px 14px;
   font: inherit;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.20);
   transition: border-color 0.15s, box-shadow 0.15s;
+  /* native select arrow visibility on dark bg */
+  -webkit-appearance: auto;
+  appearance: auto;
 }
 
 .drawer__currency-select:focus {
@@ -508,21 +528,26 @@ body {
   box-shadow: var(--blue-glow);
 }
 
+/* Nav action buttons — glass card rows like Quick Entry sections */
 .drawer__item {
   text-align: left;
-  padding: 14px 16px;
+  padding: 15px 16px;
   border-radius: var(--radius-card);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(30, 41, 59, 0.50);
-  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(30, 42, 64, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.22), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  color: #f1f5f9;
   font: inherit;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s, transform 0.10s;
+  transition: background 0.15s, transform 0.12s, box-shadow 0.12s;
 }
 
 .drawer__item:hover {
-  background: rgba(40, 55, 80, 0.70);
+  background: rgba(44, 58, 86, 0.75);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28), 0 1px 0 rgba(255, 255, 255, 0.06) inset;
 }
 
 .drawer__item:active {
@@ -532,22 +557,25 @@ body {
 
 .drawer__about {
   margin-top: auto;
-  padding: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 16px 14px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .drawer__about-title {
-  margin: 0 0 8px;
-  font-size: 0.85rem;
-  color: #93c5fd;
-  font-weight: 600;
+  margin: 0 0 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #60a5fa;
 }
 
 .drawer__about-text {
   margin: 0;
   font-size: 0.74rem;
-  line-height: 1.45;
-  color: #64748b;
+  line-height: 1.55;
+  color: #475569;
 }
 
 /* ─── Bottom Sheets ─────────────────────────────────────────────── */
@@ -555,9 +583,9 @@ body {
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgba(7, 12, 26, 0.65);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(5, 10, 24, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border: none;
   cursor: pointer;
 }
@@ -570,50 +598,59 @@ body {
   z-index: 70;
   max-height: min(88vh, 640px);
   overflow: auto;
-  background: rgba(13, 20, 37, 0.92);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-top-left-radius: 22px;
-  border-top-right-radius: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  /* match modal glass depth */
+  background: rgba(10, 16, 32, 0.90);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-bottom: none;
-  padding: 8px 16px 24px;
-  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(255, 255, 255, 0.06) inset;
-  animation: sheet-up 0.25s ease-out;
+  padding: 8px 18px 28px;
+  box-shadow:
+    0 -10px 50px rgba(0, 0, 0, 0.65),
+    0 -1px 0 rgba(255, 255, 255, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  animation: sheet-up 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes sheet-up {
   from {
     transform: translateY(100%);
+    opacity: 0;
   }
   to {
     transform: translateY(0);
+    opacity: 1;
   }
 }
 
+/* Drag handle — soft pill, low-opacity */
 .sheet__handle {
-  width: 40px;
+  width: 36px;
   height: 4px;
   border-radius: 999px;
-  background: rgba(148, 163, 184, 0.35);
-  margin: 6px auto 14px;
+  background: rgba(148, 163, 184, 0.28);
+  margin: 8px auto 16px;
 }
 
 .sheet__title {
-  margin: 0 0 8px;
-  font-size: 1.05rem;
+  margin: 0 0 12px;
+  font-size: 1.1rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
   color: #f8fafc;
 }
 
 .sheet__locked {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   font-size: 0.85rem;
-  color: #64748b;
+  color: #475569;
+  font-style: italic;
 }
 
 .sheet__income-total {
-  margin: 0 0 14px;
+  margin: 0 0 16px;
   font-size: 0.95rem;
   color: #4ade80;
 }
@@ -624,7 +661,7 @@ body {
 
 .sheet__list {
   list-style: none;
-  margin: 0 0 14px;
+  margin: 0 0 16px;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -635,10 +672,12 @@ body {
   margin-top: 8px;
 }
 
+/* Empty state — more breathing room, softer colour */
 .sheet__empty {
-  color: #64748b;
+  color: #475569;
   font-size: 0.9rem;
-  padding: 8px 0;
+  font-style: italic;
+  padding: 14px 0 6px;
 }
 
 .sheet__row {
@@ -714,8 +753,8 @@ body {
 .sheet__form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 12px;
+  margin-bottom: 4px;
 }
 
 .sheet__form-row {
@@ -753,7 +792,28 @@ body {
 
 .sheet__dismiss {
   width: 100%;
-  margin-top: 4px;
+  margin-top: 10px;
+  /* Override btn defaults to give Close a distinct secondary glass-pill look */
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(30, 42, 64, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #94a3b8;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.20);
+  transition: background 0.15s, color 0.15s, transform 0.12s;
+}
+
+.sheet__dismiss:hover {
+  background: rgba(44, 58, 86, 0.65);
+  color: #cbd5e1;
+}
+
+.sheet__dismiss:active {
+  transform: scale(0.97);
+  background: rgba(55, 72, 104, 0.80);
 }
 
 /* ─── Buttons ───────────────────────────────────────────────────── */
@@ -912,6 +972,7 @@ body {
   /* handled by gap on parent */
 }
 
+/* Base trigger — keeps working for any plain trigger usage */
 .quick-modal__trigger {
   border: none;
   background: transparent;
@@ -942,14 +1003,171 @@ body {
   background: rgba(55, 70, 100, 0.60);
 }
 
+/* ── Premium row variant ───────────────────────────────────────────
+   Icon badge + label/sub-label + right-side value + chevron
+   ──────────────────────────────────────────────────────────────── */
+.quick-modal__trigger--row {
+  padding: 12px 14px;
+  gap: 12px;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.18s, opacity 0.15s, transform 0.12s;
+}
+
+.quick-modal__trigger--row:hover {
+  background: rgba(38, 52, 80, 0.55);
+}
+
+.quick-modal__trigger--row:active {
+  opacity: 0.78;
+  transform: scale(0.985);
+  background: rgba(50, 68, 100, 0.65);
+}
+
+/* open state — very subtle active tint on the trigger */
+.quick-modal__trigger--open {
+  background: rgba(40, 55, 90, 0.40);
+}
+
+/* Icon badge — tinted rounded-square */
+.qm-row__badge {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* base — overridden per variant below */
+  background: rgba(148, 163, 184, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.20);
+}
+
+/* Expense — red/rose tint */
+.qm-row__badge--expense {
+  background: rgba(251, 113, 133, 0.15);
+  border-color: rgba(251, 113, 133, 0.22);
+  color: #fb7185;
+}
+
+/* Income — emerald/green tint */
+.qm-row__badge--income {
+  background: rgba(74, 222, 128, 0.13);
+  border-color: rgba(74, 222, 128, 0.20);
+  color: #4ade80;
+}
+
+/* Currency — sky/blue tint */
+.qm-row__badge--currency {
+  background: rgba(96, 165, 250, 0.13);
+  border-color: rgba(96, 165, 250, 0.20);
+  color: #60a5fa;
+}
+
+/* Label + sub-label column */
+.qm-row__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.qm-row__label {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: #f1f5f9;
+  line-height: 1.2;
+}
+
+.qm-row__sub {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: #64748b;
+  line-height: 1.2;
+}
+
+/* Right side — value pill + chevron */
+.qm-row__right {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Live value pill */
+.qm-row__value {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(30, 42, 65, 0.70);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+  /* base colour — overridden per variant */
+  color: #94a3b8;
+}
+
+.qm-row__value--expense {
+  color: #fb7185;
+  background: rgba(251, 113, 133, 0.10);
+  border-color: rgba(251, 113, 133, 0.18);
+}
+
+.qm-row__value--income {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.10);
+  border-color: rgba(74, 222, 128, 0.18);
+}
+
+.qm-row__value--currency {
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.10);
+  border-color: rgba(96, 165, 250, 0.18);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .quick-modal__chev {
   color: #93c5fd;
-  transition: transform 0.20s ease;
+  /* smooth 90° rotation in sync with the expand */
+  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 0.85rem;
+  display: inline-block;
 }
 
 .quick-modal__chev--open {
   transform: rotate(90deg);
+}
+
+/* ── Accordion collapse/expand ───────────────────────────────────
+   Outer wrapper: display:grid lets us animate grid-template-rows
+   from 0fr (zero height) to 1fr (natural height) — the only pure-CSS
+   trick that handles auto-height transitions without JS measurement.
+   ─────────────────────────────────────────────────────────────── */
+.quick-modal__collapse {
+  display: grid;
+  grid-template-rows: 0fr;           /* collapsed: inner div squished to 0 */
+  opacity: 0;
+  transition:
+    grid-template-rows 280ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity            240ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.quick-modal__collapse[data-open="true"] {
+  grid-template-rows: 1fr;           /* expanded: inner div at full height */
+  opacity: 1;
+}
+
+/* Inner wrapper: overflow:hidden clips the growing/shrinking content */
+.quick-modal__collapse-inner {
+  overflow: hidden;
+  /* tiny top-padding so content doesn't clip on the leading edge */
+  min-height: 0;
 }
 
 .quick-modal__panel {
