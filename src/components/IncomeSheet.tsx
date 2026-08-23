@@ -9,13 +9,14 @@ type Props = {
   entries: IncomeEntry[]
   monthlyTotal: number
   formatMoney: (n: number) => string
+  timeFormat: '12h' | '24h'
   onClose: () => void
   onAdd: (description: string, amount: number) => void
   onUpdate: (id: string, description: string, amount: number) => void
   onDelete: (id: string) => void
 }
 
-function formatExactDateTime(iso: string): string {
+function formatExactDateTime(iso: string, timeFormat: '12h' | '24h'): string {
   return new Date(iso).toLocaleString(undefined, {
     year: 'numeric',
     month: 'short',
@@ -23,7 +24,7 @@ function formatExactDateTime(iso: string): string {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    hour12: false,
+    hour12: timeFormat === '12h',
   })
 }
 
@@ -34,6 +35,7 @@ export function IncomeSheet({
   entries,
   monthlyTotal,
   formatMoney,
+  timeFormat,
   onClose,
   onAdd,
   onUpdate,
@@ -156,7 +158,7 @@ export function IncomeSheet({
                         <div className="sheet__row-main">
                           <div>
                             <span className="sheet__desc">{e.description}</span>
-                            <span className="sheet__time">{formatExactDateTime(e.createdAt)}</span>
+                            <span className="sheet__time">{formatExactDateTime(e.createdAt, timeFormat)}</span>
                           </div>
                           <span className="sheet__amt sheet__amt--income">{formatMoney(e.amount)}</span>
                         </div>

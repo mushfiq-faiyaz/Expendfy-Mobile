@@ -528,6 +528,60 @@ body {
   box-shadow: var(--blue-glow);
 }
 
+/* ─── Time format pill toggle ──────────────────────────────────── */
+.drawer__time-format {
+  padding: 14px 14px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.drawer__time-toggle {
+  display: flex;
+  border-radius: var(--radius-input);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(22, 33, 54, 0.70);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.20);
+}
+
+.drawer__time-btn {
+  flex: 1;
+  padding: 12px 14px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+}
+
+.drawer__time-btn:first-child {
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.drawer__time-btn:hover {
+  background: rgba(51, 65, 85, 0.45);
+  color: #e2e8f0;
+}
+
+.drawer__time-btn--active {
+  background: rgba(37, 99, 235, 0.30);
+  color: #60a5fa;
+  box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.35);
+}
+
+.drawer__time-btn--active:hover {
+  background: rgba(37, 99, 235, 0.40);
+  color: #93c5fd;
+}
+
 /* Nav action buttons — glass card rows like Quick Entry sections */
 .drawer__item {
   text-align: left;

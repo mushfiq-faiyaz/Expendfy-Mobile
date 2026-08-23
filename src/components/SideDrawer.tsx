@@ -6,6 +6,8 @@ type Props = {
   currency: string
   currencyOptions: string[]
   onCurrencyChange: (currency: string) => void
+  timeFormat: '12h' | '24h'
+  onTimeFormatChange: (fmt: '12h' | '24h') => void
 }
 
 export function SideDrawer({
@@ -16,6 +18,8 @@ export function SideDrawer({
   currency,
   currencyOptions,
   onCurrencyChange,
+  timeFormat,
+  onTimeFormatChange,
 }: Props) {
   if (!open) return null
   return (
@@ -44,6 +48,25 @@ export function SideDrawer({
               </option>
             ))}
           </select>
+        </div>
+        <div className="drawer__time-format">
+          <span className="drawer__currency-label">Time Format</span>
+          <div className="drawer__time-toggle">
+            <button
+              type="button"
+              className={`drawer__time-btn${timeFormat === '12h' ? ' drawer__time-btn--active' : ''}`}
+              onClick={() => onTimeFormatChange('12h')}
+            >
+              12h
+            </button>
+            <button
+              type="button"
+              className={`drawer__time-btn${timeFormat === '24h' ? ' drawer__time-btn--active' : ''}`}
+              onClick={() => onTimeFormatChange('24h')}
+            >
+              24h
+            </button>
+          </div>
         </div>
         <nav className="drawer__nav">
           <button

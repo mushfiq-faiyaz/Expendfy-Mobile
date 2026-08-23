@@ -67,12 +67,17 @@ export default function App() {
   const todayYear = today.getFullYear()
   const todayMonth = today.getMonth()
   const CURRENCY_KEY = 'expendfy_currency'
+  const TIME_FORMAT_KEY = 'expendfy_time_format'
   const CURRENCY_OPTIONS = ['TRY', 'USD', 'EUR', 'GBP', 'INR', 'JPY', 'AED', 'BDT'] as const
   const [expenses, setExpenses] = useState<Expense[]>(() => loadExpenses())
   const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>(() => loadIncome())
   const [currency, setCurrency] = useState<string>(
     () => localStorage.getItem(CURRENCY_KEY) || 'TRY',
   )
+  const [timeFormat, setTimeFormat] = useState<'12h' | '24h'>(
+    () => (localStorage.getItem(TIME_FORMAT_KEY) as '12h' | '24h') || '24h',
+  )
+
 
   const [viewYear, setViewYear] = useState(today.getFullYear())
   const [viewMonth, setViewMonth] = useState(today.getMonth())
@@ -173,6 +178,12 @@ export default function App() {
     setCurrency(nextCurrency)
     localStorage.setItem(CURRENCY_KEY, nextCurrency)
   }
+
+  function handleTimeFormatChange(fmt: '12h' | '24h'): void {
+    setTimeFormat(fmt)
+    localStorage.setItem(TIME_FORMAT_KEY, fmt)
+  }
+
 
   useEffect(() => {
     const id = window.setInterval(() => setNowMs(Date.now()), 1000)
@@ -337,6 +348,8 @@ export default function App() {
         currency={currency}
         currencyOptions={[...CURRENCY_OPTIONS]}
         onCurrencyChange={handleCurrencyChange}
+        timeFormat={timeFormat}
+        onTimeFormatChange={handleTimeFormatChange}
       />
 
       <ExpenseSheet
@@ -345,6 +358,7 @@ export default function App() {
         dateIso={selectedDate}
         expenses={expenses}
         formatMoney={formatMoney}
+        timeFormat={timeFormat}
         onClose={() => setExpenseSheetOpen(false)}
         onAdd={addExpense}
         onUpdate={updateExpense}
@@ -358,11 +372,13 @@ export default function App() {
         entries={incomeEntries}
         monthlyTotal={monthlyIncome}
         formatMoney={formatMoney}
+        timeFormat={timeFormat}
         onClose={() => setIncomeSheetOpen(false)}
         onAdd={addIncome}
         onUpdate={updateIncome}
         onDelete={deleteIncome}
       />
+
 
       <QuickEntryModal
         open={quickEntryOpen}

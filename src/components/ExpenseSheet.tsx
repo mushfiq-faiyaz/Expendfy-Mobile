@@ -7,13 +7,14 @@ type Props = {
   dateIso: string
   expenses: Expense[]
   formatMoney: (n: number) => string
+  timeFormat: '12h' | '24h'
   onClose: () => void
   onAdd: (description: string, amount: number) => void
   onUpdate: (id: string, description: string, amount: number) => void
   onDelete: (id: string) => void
 }
 
-function formatExactDateTime(iso: string): string {
+function formatExactDateTime(iso: string, timeFormat: '12h' | '24h'): string {
   return new Date(iso).toLocaleString(undefined, {
     year: 'numeric',
     month: 'short',
@@ -21,7 +22,7 @@ function formatExactDateTime(iso: string): string {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    hour12: false,
+    hour12: timeFormat === '12h',
   })
 }
 
@@ -30,11 +31,13 @@ export function ExpenseSheet({
   dateIso,
   expenses,
   formatMoney,
+  timeFormat,
   onClose,
   onAdd,
   onUpdate,
   onDelete,
 }: Props) {
+
   const [desc, setDesc] = useState('')
   const [amount, setAmount] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -117,7 +120,7 @@ export function ExpenseSheet({
                     <div className="sheet__row-main">
                       <div>
                         <span className="sheet__desc">{e.description}</span>
-                        <span className="sheet__time">{formatExactDateTime(e.createdAt)}</span>
+                        <span className="sheet__time">{formatExactDateTime(e.createdAt, timeFormat)}</span>
                       </div>
                       <span className="sheet__amt">{formatMoney(e.amount)}</span>
                     </div>
