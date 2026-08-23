@@ -210,7 +210,6 @@ export default function App() {
   }
 
   function handleDoubleTapDate(dateIso: string): void {
-    if (dateIso !== todayIso) return
     setSelectedDate(dateIso)
     setQuickEntryOpen(true)
   }

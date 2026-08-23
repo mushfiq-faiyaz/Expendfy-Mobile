@@ -104,6 +104,10 @@ export function QuickEntryModal({
   const expenseDayTotal = expensesForDate.reduce((s, e) => s + e.amount, 0)
   const incomeMonthTotal = incomeForMonth.reduce((s, e) => s + e.amount, 0)
 
+  // Future dates are read-only for expenses
+  const todayIso = new Date().toISOString().slice(0, 10)
+  const isFutureDate = dateIso > todayIso
+
   return (
     <>
       <button type="button" className="quick-modal__backdrop" onClick={onClose} aria-label="Close quick entry" />
@@ -148,24 +152,32 @@ export function QuickEntryModal({
           <div className="quick-modal__collapse" data-open={openPanel === 'expense'}>
             <div className="quick-modal__collapse-inner">
               <div className="quick-modal__panel">
-                <input
-                  className="sheet__input"
-                  placeholder="Description (optional)"
-                  value={expenseDesc}
-                  onChange={(e) => setExpenseDesc(e.target.value)}
-                />
-                <div className="quick-modal__row">
-                  <input
-                    className="sheet__input"
-                    inputMode="decimal"
-                    placeholder="Amount"
-                    value={expenseAmount}
-                    onChange={(e) => setExpenseAmount(e.target.value)}
-                  />
-                  <button type="button" className="btn btn--primary" onClick={addExpense}>
-                    Add
-                  </button>
-                </div>
+                {isFutureDate ? (
+                  <p className="quick-modal__empty" style={{ fontStyle: 'italic', padding: '4px 0 8px' }}>
+                    Future dates are read-only.
+                  </p>
+                ) : (
+                  <>
+                    <input
+                      className="sheet__input"
+                      placeholder="Description (optional)"
+                      value={expenseDesc}
+                      onChange={(e) => setExpenseDesc(e.target.value)}
+                    />
+                    <div className="quick-modal__row">
+                      <input
+                        className="sheet__input"
+                        inputMode="decimal"
+                        placeholder="Amount"
+                        value={expenseAmount}
+                        onChange={(e) => setExpenseAmount(e.target.value)}
+                      />
+                      <button type="button" className="btn btn--primary" onClick={addExpense}>
+                        Add
+                      </button>
+                    </div>
+                  </>
+                )}
                 <ul className="quick-modal__list">
                   {expensesForDate.length === 0 ? (
                     <li className="quick-modal__empty">No expenses yet</li>

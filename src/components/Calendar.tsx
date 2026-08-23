@@ -125,7 +125,9 @@ export function Calendar({
 
   function handleCellTap(iso: string, now: number): void {
     const prev = lastTapRef.current
-    if (iso === todayDateIso && prev && prev.iso === iso && now - prev.ts <= 300) {
+    // Double-tap opens quick entry for today or any past date (not future)
+    const isFuture = iso > todayDateIso
+    if (!isFuture && prev && prev.iso === iso && now - prev.ts <= 300) {
       lastTapRef.current = null
       onDoubleTapDate(iso)
       return
