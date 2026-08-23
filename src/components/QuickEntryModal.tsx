@@ -10,6 +10,7 @@ type Props = {
   expensesForDate: Expense[]
   incomeForMonth: IncomeEntry[]
   formatMoney: (n: number) => string
+  timeFormat: '12h' | '24h'
   onClose: () => void
   onAddExpense: (description: string, amount: number) => void
   onUpdateExpense: (id: string, description: string, amount: number) => void
@@ -20,6 +21,18 @@ type Props = {
   onCurrencyChange: (currency: string) => void
 }
 
+function formatDateTime(iso: string, timeFormat: '12h' | '24h'): string {
+  return new Date(iso).toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: timeFormat === '12h',
+  })
+}
+
 export function QuickEntryModal({
   open,
   dateIso,
@@ -28,6 +41,7 @@ export function QuickEntryModal({
   expensesForDate,
   incomeForMonth,
   formatMoney,
+  timeFormat,
   onClose,
   onAddExpense,
   onUpdateExpense,
@@ -215,7 +229,7 @@ export function QuickEntryModal({
                                 <span>{formatMoney(e.amount)}</span>
                               </div>
                               <div className="quick-modal__item-meta">
-                                <span>{new Date(e.createdAt).toLocaleString()}</span>
+                                <span>{formatDateTime(e.createdAt, timeFormat)}</span>
                                 <div className="quick-modal__item-actions">
                                   <button type="button" className="btn btn--ghost" onClick={() => startEditExpense(e)}>
                                     Edit
@@ -319,7 +333,7 @@ export function QuickEntryModal({
                                 <span>{formatMoney(e.amount)}</span>
                               </div>
                               <div className="quick-modal__item-meta">
-                                <span>{new Date(e.createdAt).toLocaleString()}</span>
+                                <span>{formatDateTime(e.createdAt, timeFormat)}</span>
                                 <div className="quick-modal__item-actions">
                                   <button
                                     type="button"

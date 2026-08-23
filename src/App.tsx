@@ -388,6 +388,7 @@ export default function App() {
         expensesForDate={expensesForSelectedDate}
         incomeForMonth={incomeForCurrentMonth}
         formatMoney={formatMoney}
+        timeFormat={timeFormat}
         onClose={() => setQuickEntryOpen(false)}
         onAddExpense={addExpense}
         onUpdateExpense={updateExpense}
