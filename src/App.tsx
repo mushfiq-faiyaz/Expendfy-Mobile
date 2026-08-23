@@ -395,14 +395,32 @@ export default function App() {
             right: '16px',
             bottom: '16px',
             zIndex: 9999,
-            border: 0,
+            border: '1px solid rgba(37,99,235,0.55)',
             borderRadius: '999px',
-            padding: '10px 16px',
+            padding: '11px 20px',
             fontWeight: 700,
-            backgroundColor: '#1f6feb',
+            fontSize: '0.95rem',
+            background: 'linear-gradient(135deg, #4695ff 0%, #2563eb 100%)',
             color: '#fff',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+            boxShadow: '0 6px 22px rgba(37,99,235,0.50), 0 2px 8px rgba(0,0,0,0.30)',
             cursor: 'pointer',
+            transition: 'transform 0.12s, box-shadow 0.12s',
+          }}
+          onMouseEnter={(e) => {
+            ;(e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.05)'
+            ;(e.currentTarget as HTMLButtonElement).style.boxShadow =
+              '0 8px 28px rgba(37,99,235,0.60), 0 2px 10px rgba(0,0,0,0.35)'
+          }}
+          onMouseLeave={(e) => {
+            ;(e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'
+            ;(e.currentTarget as HTMLButtonElement).style.boxShadow =
+              '0 6px 22px rgba(37,99,235,0.50), 0 2px 8px rgba(0,0,0,0.30)'
+          }}
+          onMouseDown={(e) => {
+            ;(e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.96)'
+          }}
+          onMouseUp={(e) => {
+            ;(e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'
           }}
         >
           Install App
