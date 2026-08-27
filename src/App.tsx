@@ -305,6 +305,8 @@ export default function App() {
         balanceValue={balanceValue}
         isOverBudget={isOverBudget}
         cellMode={cellMode}
+        viewYear={viewYear}
+        viewMonth={viewMonth}
         onCellModeChange={setCellMode}
         formatMoney={formatMoney}
         onMenuClick={() => setDrawerOpen(true)}

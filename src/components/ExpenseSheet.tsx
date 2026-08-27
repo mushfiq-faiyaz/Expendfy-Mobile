@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Expense } from '../types'
-import { formatDisplayDate } from '../dateUtils'
+import { formatDisplayDate, toISODate } from '../dateUtils'
 
 type Props = {
   open: boolean
@@ -45,7 +45,7 @@ export function ExpenseSheet({
   const [editAmount, setEditAmount] = useState('')
 
   // Future dates are read-only; today and past dates are fully editable
-  const todayIso = new Date().toISOString().slice(0, 10)
+  const todayIso = toISODate(new Date())
   const locked = dateIso > todayIso
   const list = expenses.filter((e) => e.date === dateIso)
 

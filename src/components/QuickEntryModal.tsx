@@ -25,7 +25,7 @@ import {
   RotateCcw,
   Award,
 } from 'lucide-react'
-import { canEditIncome, formatDisplayDate } from '../dateUtils'
+import { canEditIncome, formatDisplayDate, toISODate } from '../dateUtils'
 import type { Expense, IncomeEntry } from '../types'
 
 // ── Category definitions ──────────────────────────────────────────
@@ -279,7 +279,7 @@ export function QuickEntryModal({
   const incomeMonthTotal = incomeForMonth.reduce((s, e) => s + e.amount, 0)
 
   // Future dates are read-only for expenses
-  const todayIso = new Date().toISOString().slice(0, 10)
+  const todayIso = toISODate(new Date())
   const isFutureDate = dateIso > todayIso
 
   return (

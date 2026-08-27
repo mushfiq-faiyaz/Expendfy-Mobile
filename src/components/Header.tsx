@@ -9,10 +9,17 @@ type Props = {
   balanceValue: number
   isOverBudget: boolean
   cellMode: 'day' | 'over'
+  viewYear: number
+  viewMonth: number
   onCellModeChange: (mode: 'day' | 'over') => void
   formatMoney: (n: number) => string
   onMenuClick: () => void
 }
+
+const MONTH_NAMES = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+]
 
 export function Header({
   selectedDateLabel,
@@ -23,10 +30,22 @@ export function Header({
   balanceValue,
   isOverBudget,
   cellMode,
+  viewYear,
+  viewMonth,
   onCellModeChange,
   formatMoney,
   onMenuClick,
 }: Props) {
+  const monthLabel = `${MONTH_NAMES[viewMonth]} ${viewYear}`
+  const netBalance = monthlyIncome - monthlySpent
+  const netPositive = netBalance >= 0
+  const burnPct =
+    monthlyIncome > 0
+      ? Math.min(100, Math.round((monthlySpent / monthlyIncome) * 100))
+      : 0
+  const burnColor =
+    burnPct >= 90 ? '#f87171' : burnPct >= 70 ? '#fb923c' : '#38bdf8'
+
   return (
     <header className="app-header">
       <div className="app-header__row">
@@ -43,46 +62,104 @@ export function Header({
           ☰
         </button>
       </div>
+
+      {/* ── Summary card ── */}
       <div className="app-header__meta">
-        <div className="app-header__leftStats">
-          <p className="app-header__date">{selectedDateLabel}</p>
+
+        {/* LEFT — Today */}
+        <div className="app-header__panel app-header__panel--left">
+          <p className="app-header__panel-title">{selectedDateLabel}</p>
+
+          {/* Spent today — tapping switches calendar to day-spend mode */}
           <button
             type="button"
-            className={`app-header__pick ${cellMode === 'day' ? 'app-header__pick--on' : ''}`}
+            className={`app-header__mode-btn${cellMode === 'day' ? ' app-header__mode-btn--active' : ''}`}
             onClick={() => onCellModeChange('day')}
           >
-            <span className="app-header__pick-box" />
-            <span className="app-header__stat app-header__stat--today">
-              Spent: {formatMoney(dayCost)}
+            <span className="app-header__label">Spent</span>
+            <span className="app-header__value app-header__value--today">
+              {formatMoney(dayCost)}
             </span>
           </button>
-          <p className="app-header__stat app-header__stat--avg">
-            Average expense: {formatMoney(averageExpense)}
-          </p>
+
+          {/* Remain / Over — tapping switches calendar to over-budget mode */}
           <button
             type="button"
-            className={`app-header__pick ${cellMode === 'over' ? 'app-header__pick--on' : ''}`}
+            className={`app-header__mode-btn${cellMode === 'over' ? ' app-header__mode-btn--active' : ''}`}
             onClick={() => onCellModeChange('over')}
           >
-            <span className="app-header__pick-box" />
+            <span className="app-header__label">
+              {isOverBudget ? 'Over' : 'Remain'}
+            </span>
             <span
-              className={`app-header__stat ${
-                isOverBudget ? 'app-header__stat--over' : 'app-header__stat--remain'
+              className={`app-header__value ${
+                isOverBudget ? 'app-header__value--over' : 'app-header__value--remain'
               }`}
             >
-              {isOverBudget ? 'Over' : 'Remain'}: {formatMoney(balanceValue)}
+              {formatMoney(balanceValue)}
             </span>
           </button>
+
+          {/* Average — muted supporting stat */}
+          <div className="app-header__stat-row app-header__stat-row--avg">
+            <span className="app-header__label app-header__label--muted">Avg / day</span>
+            <span className="app-header__value app-header__value--avg">
+              {formatMoney(averageExpense)}
+            </span>
+          </div>
         </div>
-        <div className="app-header__stats">
-          <p className="app-header__stat app-header__stat--monthly">Monthly</p>
-          <p className="app-header__stat app-header__stat--spent">
-            Spent: {formatMoney(monthlySpent)}
-          </p>
-          <p className="app-header__stat app-header__stat--income">
-            Income: {formatMoney(monthlyIncome)}
-          </p>
+
+        {/* VERTICAL DIVIDER */}
+        <div className="app-header__divider" />
+
+        {/* RIGHT — Monthly */}
+        <div className="app-header__panel app-header__panel--right">
+          <div className="app-header__panel-header">
+            <span className="app-header__panel-title app-header__panel-title--monthly">
+              Monthly
+            </span>
+            <span className="app-header__panel-subtitle">{monthLabel}</span>
+          </div>
+
+          <div className="app-header__stat-row">
+            <span className="app-header__label">Spent</span>
+            <span className="app-header__value app-header__value--spent">
+              {formatMoney(monthlySpent)}
+            </span>
+          </div>
+
+          <div className="app-header__stat-row">
+            <span className="app-header__label">Income</span>
+            <span className="app-header__value app-header__value--income">
+              {formatMoney(monthlyIncome)}
+            </span>
+          </div>
+
+          <div className="app-header__stat-row">
+            <span className="app-header__label">Balance</span>
+            <span
+              className={`app-header__value ${
+                netPositive ? 'app-header__value--remain' : 'app-header__value--over'
+              }`}
+            >
+              {netPositive ? '+' : ''}
+              {formatMoney(netBalance)}
+            </span>
+          </div>
+
+          {/* Burn-rate progress bar */}
+          <div
+            className="app-header__progress-track"
+            title={`${burnPct}% of income spent`}
+          >
+            <div
+              className="app-header__progress-bar"
+              style={{ width: `${burnPct}%`, background: burnColor }}
+            />
+          </div>
+          <span className="app-header__progress-label">{burnPct}% spent</span>
         </div>
+
       </div>
     </header>
   )
