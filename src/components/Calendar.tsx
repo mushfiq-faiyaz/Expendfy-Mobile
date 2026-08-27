@@ -212,7 +212,6 @@ export function Calendar({
 
             const formattedDisplay =
               cellValue > 0 ? formatCompactAmount(cellValue, formatMoney) : ''
-            const isLongAmount = formattedDisplay.length >= 7
 
             return (
               <button
@@ -229,7 +228,7 @@ export function Calendar({
                   .filter(Boolean)
                   .join(' ')}
                 style={
-                  hasInput && !isToday && !isSelected
+                  hasInput && !isToday
                     ? ({ '--spend-intensity': spendIntensity } as React.CSSProperties)
                     : undefined
                 }
@@ -240,7 +239,6 @@ export function Calendar({
                   <span
                     className={[
                       'calendar__day-spend',
-                      isLongAmount && 'calendar__day-spend--compact',
                       isOverCell && 'calendar__day-spend--over',
                       isRemainCell && 'calendar__day-spend--remain',
                     ]

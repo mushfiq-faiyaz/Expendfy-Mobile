@@ -67,8 +67,8 @@ export function formatCompactAmount(
   }
 
   const sample = formatMoney(1)
-  const symbol = formatMoney(0).replace(/[\d.,\s]/g, '') || ''
-  const isPrefix = sample.startsWith(symbol)
+  const symbol = formatMoney(0).replace(/[\d.,\s\u00A0\u202F]/g, '') || ''
+  const isPrefix = sample.trim().startsWith(symbol)
 
   let formattedNum: string
   if (n >= 1_000_000) {

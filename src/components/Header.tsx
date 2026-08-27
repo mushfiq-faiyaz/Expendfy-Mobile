@@ -101,9 +101,9 @@ export function Header({
             </span>
           </button>
 
-          {/* Average — muted supporting stat */}
+          {/* Average */}
           <div className="app-header__stat-row app-header__stat-row--avg">
-            <span className="app-header__label app-header__label--muted">Avg / day</span>
+            <span className="app-header__label">Avg / day</span>
             <span className="app-header__value app-header__value--avg">
               {formatMoney(averageExpense)}
             </span>

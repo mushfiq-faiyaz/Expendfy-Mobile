@@ -229,8 +229,8 @@ body {
 .app-header__value--today  { color: #ffffff; }
 .app-header__value--remain { color: #4ade80; }
 .app-header__value--over   { color: #f87171; }
-.app-header__value--avg     { color: #60a5fa; font-weight: 600; }
-.app-header__value--balance { color: #60a5fa; font-weight: 600; }
+.app-header__value--avg     { color: #60a5fa; font-weight: 700; }
+.app-header__value--balance { color: #60a5fa; font-weight: 700; }
 .app-header__value--spent   { color: #ffffff; }
 .app-header__value--income  { color: #4ade80; }
 
@@ -417,22 +417,24 @@ body {
 }
 
 /* Subtle monochrome/slate background tint scaled by relative spend */
-.calendar__cell--has-spend:not(.calendar__cell--today):not(.calendar__cell--selected) {
+.calendar__cell--has-spend:not(.calendar__cell--today) {
   background: rgba(40, 58, 88, calc(0.55 + var(--spend-intensity, 0) * 0.30));
   border-color: rgba(148, 163, 184, calc(0.08 + var(--spend-intensity, 0) * 0.14));
 }
 
-/* Subtle understated top accent indicator for income */
+/* Subtle understated top accent indicator for income — 3px thick, noticeable contrast */
 .calendar__cell--has-income::before {
   content: '';
   position: absolute;
   top: 3px;
-  left: calc(50% - 8px);
-  width: 16px;
-  height: 2px;
-  background: rgba(74, 222, 128, 0.80);
+  left: calc(50% - 10px);
+  width: 20px;
+  height: 3px;
+  background: rgba(74, 222, 128, 0.92);
   border-radius: 99px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
   pointer-events: none;
+  z-index: 2;
 }
 
 .calendar__cell--empty {
@@ -450,10 +452,21 @@ body {
   background: rgba(22, 32, 50, 0.35);
 }
 
+/* Selected cell — blue ring layers on top without overriding spend tint or text */
 .calendar__cell--selected:not(.calendar__cell--today) {
-  outline: 2px solid rgba(96, 165, 250, 0.60);
+  outline: 2px solid rgba(96, 165, 250, 0.85);
   outline-offset: -1px;
+  box-shadow:
+    0 0 0 1px rgba(96, 165, 250, 0.40),
+    0 3px 12px rgba(0, 0, 0, 0.35);
+}
+
+.calendar__cell--selected:not(.calendar__cell--today):not(.calendar__cell--has-spend) {
   background: rgba(37, 58, 92, 0.70);
+}
+
+.calendar__cell--has-spend.calendar__cell--selected:hover {
+  background: rgba(48, 68, 100, calc(0.65 + var(--spend-intensity, 0) * 0.25));
 }
 
 /* Today — glowing yellow glass pill */
@@ -472,35 +485,34 @@ body {
   background: rgba(234, 179, 8, 0.28);
 }
 
-/* Date number — bold primary anchor */
+/* Date number — bold primary anchor centered */
 .calendar__day-num {
   font-weight: 700;
   font-size: clamp(0.72rem, 2.4vmin, 1.05rem);
   line-height: 1.1;
   color: #f1f5f9;
   text-align: center;
+  display: block;
   width: 100%;
+  margin: 0 auto;
 }
 
 /* Day spend amount — clean, centered secondary info with breathing room from bottom */
 .calendar__day-spend {
-  font-size: clamp(0.56rem, 1.85vmin, 0.74rem);
+  font-size: clamp(0.58rem, 1.9vmin, 0.76rem);
   font-weight: 500;
-  line-height: 1.15;
-  color: rgba(226, 232, 240, 0.85);
+  line-height: 1.2;
+  color: rgba(226, 232, 240, 0.90);
   text-align: center;
+  display: block;
   width: 100%;
+  margin: 0 auto;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   letter-spacing: -0.015em;
   padding: 0 2px;
   box-sizing: border-box;
-}
-
-.calendar__day-spend--compact {
-  font-size: clamp(0.48rem, 1.6vmin, 0.64rem);
-  letter-spacing: -0.025em;
 }
 
 .calendar__day-spend--over {
