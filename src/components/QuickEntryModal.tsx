@@ -1,6 +1,51 @@
 import { useState } from 'react'
+import {
+  ChevronDown,
+  X,
+  Utensils,
+  ShoppingCart,
+  Bus,
+  Home,
+  Gamepad2,
+  HeartPulse,
+  GraduationCap,
+  Plane,
+  ShoppingBasket,
+  Shirt,
+  Receipt,
+  Sparkles,
+  Gift,
+  Plus,
+} from 'lucide-react'
 import { canEditIncome, formatDisplayDate } from '../dateUtils'
 import type { Expense, IncomeEntry } from '../types'
+
+// ── Category definitions ──────────────────────────────────────────
+type Category = {
+  id: string
+  label: string
+  Icon: React.FC<{ size?: number; strokeWidth?: number }>
+  color: string       // icon stroke/fill colour
+  bg: string          // icon badge background
+  border: string      // icon badge border
+}
+
+const CATEGORIES: Category[] = [
+  { id: 'food',         label: 'Food',           Icon: Utensils,       color: '#fb923c', bg: 'rgba(251,146,60,0.13)',  border: 'rgba(251,146,60,0.22)' },
+  { id: 'shopping',     label: 'Shopping',       Icon: ShoppingCart,   color: '#a78bfa', bg: 'rgba(167,139,250,0.13)', border: 'rgba(167,139,250,0.22)' },
+  { id: 'transport',    label: 'Transport',      Icon: Bus,            color: '#38bdf8', bg: 'rgba(56,189,248,0.13)',  border: 'rgba(56,189,248,0.22)' },
+  { id: 'housing',      label: 'Housing',        Icon: Home,           color: '#34d399', bg: 'rgba(52,211,153,0.13)',  border: 'rgba(52,211,153,0.22)' },
+  { id: 'entertainment',label: 'Entertainment',  Icon: Gamepad2,       color: '#f472b6', bg: 'rgba(244,114,182,0.13)', border: 'rgba(244,114,182,0.22)' },
+  { id: 'health',       label: 'Health',         Icon: HeartPulse,     color: '#f87171', bg: 'rgba(248,113,113,0.13)', border: 'rgba(248,113,113,0.22)' },
+  { id: 'education',    label: 'Education',      Icon: GraduationCap,  color: '#60a5fa', bg: 'rgba(96,165,250,0.13)',  border: 'rgba(96,165,250,0.22)' },
+  { id: 'travel',       label: 'Travel',         Icon: Plane,          color: '#facc15', bg: 'rgba(250,204,21,0.13)',  border: 'rgba(250,204,21,0.22)' },
+  { id: 'groceries',    label: 'Groceries',      Icon: ShoppingBasket, color: '#4ade80', bg: 'rgba(74,222,128,0.13)',  border: 'rgba(74,222,128,0.22)' },
+  { id: 'clothing',     label: 'Clothing',       Icon: Shirt,          color: '#e879f9', bg: 'rgba(232,121,249,0.13)', border: 'rgba(232,121,249,0.22)' },
+  { id: 'bills',        label: 'Bills',          Icon: Receipt,        color: '#94a3b8', bg: 'rgba(148,163,184,0.13)', border: 'rgba(148,163,184,0.22)' },
+  { id: 'personalcare', label: 'Personal Care',  Icon: Sparkles,       color: '#c084fc', bg: 'rgba(192,132,252,0.13)', border: 'rgba(192,132,252,0.22)' },
+  { id: 'gifts',        label: 'Gifts',          Icon: Gift,           color: '#fb7185', bg: 'rgba(251,113,133,0.13)', border: 'rgba(251,113,133,0.22)' },
+  { id: 'other',        label: 'Other',          Icon: Plus,           color: '#64748b', bg: 'rgba(100,116,139,0.10)', border: 'rgba(100,116,139,0.28)' },
+]
 
 type Props = {
   open: boolean
@@ -33,6 +78,87 @@ function formatDateTime(iso: string, timeFormat: '12h' | '24h'): string {
   })
 }
 
+// ── Tiny category chip shown inside the description wrapper ───────
+function CategoryChip({ cat, onRemove }: { cat: Category; onRemove: () => void }) {
+  return (
+    <span className="cat-chip">
+      <span
+        className="cat-chip__badge"
+        style={{ background: cat.bg, border: `1px solid ${cat.border}`, color: cat.color }}
+      >
+        <cat.Icon size={11} strokeWidth={2.2} />
+      </span>
+      <span className="cat-chip__label">{cat.label}</span>
+      <button
+        type="button"
+        className="cat-chip__remove"
+        onClick={onRemove}
+        aria-label={`Remove ${cat.label} category`}
+      >
+        <X size={10} strokeWidth={2.5} />
+      </button>
+    </span>
+  )
+}
+
+// ── Category picker bottom-sheet / modal ──────────────────────────
+function CategoryPicker({
+  selected,
+  onSelect,
+  onClose,
+}: {
+  selected: string | null
+  onSelect: (cat: Category) => void
+  onClose: () => void
+}) {
+  return (
+    <>
+      <button
+        type="button"
+        className="cat-picker__backdrop"
+        onClick={onClose}
+        aria-label="Close category picker"
+      />
+      <div className="cat-picker" role="dialog" aria-modal aria-label="Pick a category">
+        <div className="cat-picker__handle" />
+        <h3 className="cat-picker__title">Category</h3>
+        <div className="cat-picker__grid">
+          {CATEGORIES.map((cat) => {
+            const isActive = selected === cat.id
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                className={`cat-picker__item${isActive ? ' cat-picker__item--active' : ''}`}
+                onClick={() => onSelect(cat)}
+                aria-pressed={isActive}
+              >
+                <span
+                  className="cat-picker__icon"
+                  style={{
+                    background: cat.bg,
+                    border: `1px solid ${cat.border}`,
+                    color: cat.color,
+                    ...(cat.id === 'other'
+                      ? { borderStyle: 'dashed' }
+                      : {}),
+                  }}
+                >
+                  <cat.Icon size={20} strokeWidth={1.8} />
+                </span>
+                <span className="cat-picker__label">{cat.label}</span>
+              </button>
+            )
+          })}
+        </div>
+        <button type="button" className="cat-picker__dismiss" onClick={onClose}>
+          Cancel
+        </button>
+      </div>
+    </>
+  )
+}
+
 export function QuickEntryModal({
   open,
   dateIso,
@@ -61,14 +187,20 @@ export function QuickEntryModal({
   const [editDesc, setEditDesc] = useState('')
   const [editAmount, setEditAmount] = useState('')
 
+  // Category picker state
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
+  const [catPickerOpen, setCatPickerOpen] = useState(false)
+
   if (!open) return null
 
   function addExpense(): void {
     const n = parseFloat(expenseAmount.replace(',', '.'))
     if (Number.isNaN(n) || n <= 0) return
-    onAddExpense(expenseDesc.trim(), n)
+    const catPrefix = selectedCategory ? `[${selectedCategory.label}] ` : ''
+    onAddExpense(catPrefix + expenseDesc.trim(), n)
     setExpenseDesc('')
     setExpenseAmount('')
+    setSelectedCategory(null)
   }
 
   function addIncome(): void {
@@ -172,12 +304,31 @@ export function QuickEntryModal({
                   </p>
                 ) : (
                   <>
-                    <input
-                      className="sheet__input"
-                      placeholder="Description (optional)"
-                      value={expenseDesc}
-                      onChange={(e) => setExpenseDesc(e.target.value)}
-                    />
+                    {/* ── Description input with category chip + picker button ── */}
+                    <div className="desc-field">
+                      {selectedCategory && (
+                        <CategoryChip
+                          cat={selectedCategory}
+                          onRemove={() => setSelectedCategory(null)}
+                        />
+                      )}
+                      <input
+                        className="desc-field__input"
+                        placeholder={selectedCategory ? 'Add note…' : 'Description (optional)'}
+                        value={expenseDesc}
+                        onChange={(e) => setExpenseDesc(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className="desc-field__cat-btn"
+                        onClick={() => setCatPickerOpen(true)}
+                        aria-label="Pick category"
+                        title="Pick category"
+                      >
+                        <ChevronDown size={14} strokeWidth={2.5} />
+                      </button>
+                    </div>
+
                     <div className="quick-modal__row">
                       <input
                         className="sheet__input"
@@ -409,6 +560,18 @@ export function QuickEntryModal({
           </div>
         </section>
       </div>
+
+      {/* ── Category picker overlay — rendered outside the modal card so it sits on top ── */}
+      {catPickerOpen && (
+        <CategoryPicker
+          selected={selectedCategory?.id ?? null}
+          onSelect={(cat) => {
+            setSelectedCategory(cat)
+            setCatPickerOpen(false)
+          }}
+          onClose={() => setCatPickerOpen(false)}
+        />
+      )}
     </>
   )
 }
