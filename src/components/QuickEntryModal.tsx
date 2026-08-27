@@ -2,6 +2,7 @@ import { useState } from 'react'
 import {
   ChevronDown,
   X,
+  // Expense icons
   Utensils,
   ShoppingCart,
   Bus,
@@ -16,6 +17,13 @@ import {
   Sparkles,
   Gift,
   Plus,
+  // Income icons
+  Wallet,
+  Laptop,
+  Briefcase,
+  TrendingUp,
+  RotateCcw,
+  Award,
 } from 'lucide-react'
 import { canEditIncome, formatDisplayDate } from '../dateUtils'
 import type { Expense, IncomeEntry } from '../types'
@@ -30,7 +38,7 @@ type Category = {
   border: string      // icon badge border
 }
 
-const CATEGORIES: Category[] = [
+const EXPENSE_CATEGORIES: Category[] = [
   { id: 'food',         label: 'Food',           Icon: Utensils,       color: '#fb923c', bg: 'rgba(251,146,60,0.13)',  border: 'rgba(251,146,60,0.22)' },
   { id: 'shopping',     label: 'Shopping',       Icon: ShoppingCart,   color: '#a78bfa', bg: 'rgba(167,139,250,0.13)', border: 'rgba(167,139,250,0.22)' },
   { id: 'transport',    label: 'Transport',      Icon: Bus,            color: '#38bdf8', bg: 'rgba(56,189,248,0.13)',  border: 'rgba(56,189,248,0.22)' },
@@ -45,6 +53,17 @@ const CATEGORIES: Category[] = [
   { id: 'personalcare', label: 'Personal Care',  Icon: Sparkles,       color: '#c084fc', bg: 'rgba(192,132,252,0.13)', border: 'rgba(192,132,252,0.22)' },
   { id: 'gifts',        label: 'Gifts',          Icon: Gift,           color: '#fb7185', bg: 'rgba(251,113,133,0.13)', border: 'rgba(251,113,133,0.22)' },
   { id: 'other',        label: 'Other',          Icon: Plus,           color: '#64748b', bg: 'rgba(100,116,139,0.10)', border: 'rgba(100,116,139,0.28)' },
+]
+
+const INCOME_CATEGORIES: Category[] = [
+  { id: 'salary',     label: 'Salary',     Icon: Wallet,     color: '#4ade80', bg: 'rgba(74,222,128,0.13)',  border: 'rgba(74,222,128,0.22)' },
+  { id: 'freelance',  label: 'Freelance',  Icon: Laptop,     color: '#60a5fa', bg: 'rgba(96,165,250,0.13)',  border: 'rgba(96,165,250,0.22)' },
+  { id: 'business',   label: 'Business',   Icon: Briefcase,  color: '#fb923c', bg: 'rgba(251,146,60,0.13)',  border: 'rgba(251,146,60,0.22)' },
+  { id: 'investment', label: 'Investment', Icon: TrendingUp, color: '#34d399', bg: 'rgba(52,211,153,0.13)',  border: 'rgba(52,211,153,0.22)' },
+  { id: 'gift',       label: 'Gift',       Icon: Gift,       color: '#f472b6', bg: 'rgba(244,114,182,0.13)', border: 'rgba(244,114,182,0.22)' },
+  { id: 'refund',     label: 'Refund',     Icon: RotateCcw,  color: '#38bdf8', bg: 'rgba(56,189,248,0.13)',  border: 'rgba(56,189,248,0.22)' },
+  { id: 'bonus',      label: 'Bonus',      Icon: Award,      color: '#facc15', bg: 'rgba(250,204,21,0.13)',  border: 'rgba(250,204,21,0.22)' },
+  { id: 'other',      label: 'Other',      Icon: Plus,       color: '#64748b', bg: 'rgba(100,116,139,0.10)', border: 'rgba(100,116,139,0.28)' },
 ]
 
 type Props = {
@@ -103,10 +122,12 @@ function CategoryChip({ cat, onRemove }: { cat: Category; onRemove: () => void }
 
 // ── Category picker bottom-sheet / modal ──────────────────────────
 function CategoryPicker({
+  categories,
   selected,
   onSelect,
   onClose,
 }: {
+  categories: Category[]
   selected: string | null
   onSelect: (cat: Category) => void
   onClose: () => void
@@ -123,7 +144,7 @@ function CategoryPicker({
         <div className="cat-picker__handle" />
         <h3 className="cat-picker__title">Category</h3>
         <div className="cat-picker__grid">
-          {CATEGORIES.map((cat) => {
+          {categories.map((cat) => {
             const isActive = selected === cat.id
             return (
               <button
@@ -187,9 +208,13 @@ export function QuickEntryModal({
   const [editDesc, setEditDesc] = useState('')
   const [editAmount, setEditAmount] = useState('')
 
-  // Category picker state
+  // Category picker state — expense
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [catPickerOpen, setCatPickerOpen] = useState(false)
+
+  // Category picker state — income
+  const [selectedIncomeCategory, setSelectedIncomeCategory] = useState<Category | null>(null)
+  const [incomeCatPickerOpen, setIncomeCatPickerOpen] = useState(false)
 
   if (!open) return null
 
@@ -206,10 +231,13 @@ export function QuickEntryModal({
   function addIncome(): void {
     const n = parseFloat(incomeAmount.replace(',', '.'))
     if (Number.isNaN(n) || n <= 0) return
-    onAddIncome(incomeDesc.trim(), n)
+    const catPrefix = selectedIncomeCategory ? `[${selectedIncomeCategory.label}] ` : ''
+    onAddIncome(catPrefix + incomeDesc.trim(), n)
     setIncomeDesc('')
     setIncomeAmount('')
+    setSelectedIncomeCategory(null)
   }
+
 
   function togglePanel(panel: 'expense' | 'income' | 'currency'): void {
     setOpenPanel((prev) => (prev === panel ? null : panel))
@@ -430,12 +458,31 @@ export function QuickEntryModal({
           <div className="quick-modal__collapse" data-open={openPanel === 'income'}>
             <div className="quick-modal__collapse-inner">
               <div className="quick-modal__panel">
-                <input
-                  className="sheet__input"
-                  placeholder="Description (optional)"
-                  value={incomeDesc}
-                  onChange={(e) => setIncomeDesc(e.target.value)}
-                />
+                {/* ── Description input with category chip + picker button ── */}
+                <div className="desc-field">
+                  {selectedIncomeCategory && (
+                    <CategoryChip
+                      cat={selectedIncomeCategory}
+                      onRemove={() => setSelectedIncomeCategory(null)}
+                    />
+                  )}
+                  <input
+                    className="desc-field__input"
+                    placeholder={selectedIncomeCategory ? 'Add note…' : 'Description (optional)'}
+                    value={incomeDesc}
+                    onChange={(e) => setIncomeDesc(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="desc-field__cat-btn"
+                    onClick={() => setIncomeCatPickerOpen(true)}
+                    aria-label="Pick category"
+                    title="Pick category"
+                  >
+                    <ChevronDown size={14} strokeWidth={2.5} />
+                  </button>
+                </div>
+
                 <div className="quick-modal__row">
                   <input
                     className="sheet__input"
@@ -515,61 +562,30 @@ export function QuickEntryModal({
             </div>
           </div>
         </section>
-
-        {/* ── Currency unit section ── */}
-        <section className="quick-modal__section">
-          <button
-            type="button"
-            className={`quick-modal__trigger quick-modal__trigger--row ${openPanel === 'currency' ? 'quick-modal__trigger--open' : ''}`}
-            onClick={() => togglePanel('currency')}
-          >
-            {/* Icon badge — blue tint */}
-            <span className="qm-row__badge qm-row__badge--currency" aria-hidden>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="9"/>
-                <path d="M14.5 9a3.5 3 0 0 0-5 0v6a3.5 3 0 0 0 5 0"/>
-              </svg>
-            </span>
-            {/* Label + sub-label */}
-            <span className="qm-row__body">
-              <span className="qm-row__label">Currency</span>
-              <span className="qm-row__sub">Display unit</span>
-            </span>
-            {/* Live value + chevron */}
-            <span className="qm-row__right">
-              <span className="qm-row__value qm-row__value--currency">{currency}</span>
-              <span className={`quick-modal__chev ${openPanel === 'currency' ? 'quick-modal__chev--open' : ''}`}>›</span>
-            </span>
-          </button>
-          <div className="quick-modal__collapse" data-open={openPanel === 'currency'}>
-            <div className="quick-modal__collapse-inner">
-              <div className="quick-modal__panel">
-                <select
-                  className="drawer__currency-select"
-                  value={currency}
-                  onChange={(e) => onCurrencyChange(e.target.value)}
-                >
-                  {currencyOptions.map((code) => (
-                    <option key={code} value={code}>
-                      {code}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
 
-      {/* ── Category picker overlay — rendered outside the modal card so it sits on top ── */}
+
+      {/* ── Category picker overlays — rendered outside the modal card so they sit on top ── */}
       {catPickerOpen && (
         <CategoryPicker
+          categories={EXPENSE_CATEGORIES}
           selected={selectedCategory?.id ?? null}
           onSelect={(cat) => {
             setSelectedCategory(cat)
             setCatPickerOpen(false)
           }}
           onClose={() => setCatPickerOpen(false)}
+        />
+      )}
+      {incomeCatPickerOpen && (
+        <CategoryPicker
+          categories={INCOME_CATEGORIES}
+          selected={selectedIncomeCategory?.id ?? null}
+          onSelect={(cat) => {
+            setSelectedIncomeCategory(cat)
+            setIncomeCatPickerOpen(false)
+          }}
+          onClose={() => setIncomeCatPickerOpen(false)}
         />
       )}
     </>

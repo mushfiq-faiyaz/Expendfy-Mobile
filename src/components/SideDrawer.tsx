@@ -1,8 +1,6 @@
 type Props = {
   open: boolean
   onClose: () => void
-  onPickIncome: () => void
-  onPickExpense: () => void
   currency: string
   currencyOptions: string[]
   onCurrencyChange: (currency: string) => void
@@ -13,8 +11,6 @@ type Props = {
 export function SideDrawer({
   open,
   onClose,
-  onPickIncome,
-  onPickExpense,
   currency,
   currencyOptions,
   onCurrencyChange,
@@ -68,28 +64,7 @@ export function SideDrawer({
             </button>
           </div>
         </div>
-        <nav className="drawer__nav">
-          <button
-            type="button"
-            className="drawer__item"
-            onClick={() => {
-              onPickExpense()
-              onClose()
-            }}
-          >
-            Expense
-          </button>
-          <button
-            type="button"
-            className="drawer__item"
-            onClick={() => {
-              onPickIncome()
-              onClose()
-            }}
-          >
-            Income
-          </button>
-        </nav>
+
         <div className="drawer__about">
           <p className="drawer__about-title">About</p>
           <p className="drawer__about-text">

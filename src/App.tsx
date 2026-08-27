@@ -337,14 +337,6 @@ export default function App() {
       <SideDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        onPickExpense={() => {
-          jumpToTodayContext()
-          setExpenseSheetOpen(true)
-        }}
-        onPickIncome={() => {
-          jumpToTodayContext()
-          setIncomeSheetOpen(true)
-        }}
         currency={currency}
         currencyOptions={[...CURRENCY_OPTIONS]}
         onCurrencyChange={handleCurrencyChange}
