@@ -190,14 +190,8 @@ body {
 }
 .app-header__mode-btn--active {
   /* subtle left accent stripe for active mode */
-  box-shadow: inset 2px 0 0 #38bdf8;
+  box-shadow: inset 2px 0 0 #ffffff;
   padding-left: 4px;
-}
-.app-header__mode-btn--active[data-balance="remain"] {
-  box-shadow: inset 2px 0 0 #4ade80;
-}
-.app-header__mode-btn--active[data-balance="over"] {
-  box-shadow: inset 2px 0 0 #f87171;
 }
 .app-header__mode-btn:hover {
   background: rgba(255, 255, 255, 0.04);
@@ -213,6 +207,12 @@ body {
 }
 .app-header__label--muted {
   color: rgba(148, 163, 184, 0.55);
+}
+.app-header__label--over {
+  color: #f87171;
+}
+.app-header__label--remain {
+  color: #4ade80;
 }
 
 /* Value text — larger, bold */
@@ -422,19 +422,14 @@ body {
   border-color: rgba(148, 163, 184, calc(0.08 + var(--spend-intensity, 0) * 0.14));
 }
 
-/* Subtle understated top accent indicator for income — 3px thick, noticeable contrast */
-.calendar__cell--has-income::before {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: calc(50% - 10px);
-  width: 20px;
-  height: 3px;
-  background: rgba(74, 222, 128, 0.92);
-  border-radius: 99px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
-  pointer-events: none;
-  z-index: 2;
+/* Income date text — green */
+.calendar__cell--has-income .calendar__day-num {
+  color: #4ade80;
+}
+
+/* Highest expense day text — red */
+.calendar__cell--highest-spend .calendar__day-num {
+  color: #f87171;
 }
 
 .calendar__cell--empty {

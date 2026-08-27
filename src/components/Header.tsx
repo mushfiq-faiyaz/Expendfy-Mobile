@@ -90,7 +90,7 @@ export function Header({
             onClick={() => onCellModeChange('over')}
           >
             <span className="app-header__label">
-              Over / Remain
+              <span className="app-header__label--over">Over</span> / <span className="app-header__label--remain">Remain</span>
             </span>
             <span
               className={`app-header__value ${

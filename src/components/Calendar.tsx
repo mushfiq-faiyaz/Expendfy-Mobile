@@ -53,6 +53,18 @@ export function Calendar({
     [spendByDate],
   )
 
+  const highestExpenseIso = useMemo(() => {
+    let max = 0
+    let maxIso: string | null = null
+    for (const [iso, amount] of Object.entries(spendByDate)) {
+      if (amount > max) {
+        max = amount
+        maxIso = iso
+      }
+    }
+    return maxIso
+  }, [spendByDate])
+
   const firstDow = weekdayIndexFirstOfMonth(year, monthIndex)
   const dim = daysInMonth(year, monthIndex)
   const today = new Date()
@@ -203,6 +215,8 @@ export function Calendar({
             const isOverCell = cellMode === 'over' && hasInput && diff > 0
             const isRemainCell = cellMode === 'over' && hasInput && diff < 0
             const hasIncome = inCurrentMonth && (incomeDates?.has(iso) ?? false)
+            const isHighestSpend =
+              inCurrentMonth && iso === highestExpenseIso && (spendByDate[iso] ?? 0) > 0
 
             // Subtle spend intensity from 0 to 1 for tonal background tint
             const spendIntensity =
@@ -222,6 +236,7 @@ export function Calendar({
                   !inCurrentMonth && 'calendar__cell--otherMonth',
                   hasInput && 'calendar__cell--has-spend',
                   hasIncome && 'calendar__cell--has-income',
+                  isHighestSpend && 'calendar__cell--highest-spend',
                   isToday && 'calendar__cell--today',
                   isSelected && 'calendar__cell--selected',
                 ]
