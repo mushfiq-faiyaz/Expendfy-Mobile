@@ -86,10 +86,11 @@ export function Header({
           <button
             type="button"
             className={`app-header__mode-btn${cellMode === 'over' ? ' app-header__mode-btn--active' : ''}`}
+            data-balance={isOverBudget ? 'over' : 'remain'}
             onClick={() => onCellModeChange('over')}
           >
             <span className="app-header__label">
-              {isOverBudget ? 'Over' : 'Remain'}
+              Over / Remain
             </span>
             <span
               className={`app-header__value ${
@@ -137,11 +138,7 @@ export function Header({
 
           <div className="app-header__stat-row">
             <span className="app-header__label">Balance</span>
-            <span
-              className={`app-header__value ${
-                netPositive ? 'app-header__value--remain' : 'app-header__value--over'
-              }`}
-            >
+            <span className="app-header__value app-header__value--balance">
               {netPositive ? '+' : ''}
               {formatMoney(netBalance)}
             </span>

@@ -111,9 +111,13 @@ export default function App() {
     () => expenses.filter((e) => e.date === selectedDate).reduce((sum, e) => sum + e.amount, 0),
     [expenses, selectedDate],
   )
-  const dayBalance = useMemo(() => averageExpense - selectedDateCost, [averageExpense, selectedDateCost])
-  const isOverBudget = dayBalance < 0
-  const balanceValue = Math.abs(dayBalance)
+  // Single source of truth: positive = remaining budget, negative = over budget
+  const remainingAmount = useMemo(
+    () => averageExpense - selectedDateCost,
+    [averageExpense, selectedDateCost],
+  )
+  const isOverBudget = remainingAmount < 0
+  const balanceValue = Math.abs(remainingAmount)
   const selectedDateStatus = (() => {
     const selected = parseISODate(selectedDate)
     const todayStart = startOfToday()
