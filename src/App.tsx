@@ -426,6 +426,31 @@ export default function App() {
     }
   }
 
+  function handleRestoreCategoryState(
+    side: 'expense' | 'income',
+    state: {
+      customCategories: CustomCategory[]
+      categoryOrder: string[]
+      hiddenPresets: string[]
+    },
+  ): void {
+    if (side === 'expense') {
+      setCustomExpenseCategories(state.customCategories)
+      saveCustomExpenseCategories(state.customCategories)
+      setExpenseCategoryOrder(state.categoryOrder)
+      saveExpenseCategoryOrder(state.categoryOrder)
+      setExpenseHiddenPresets(state.hiddenPresets)
+      saveExpenseHiddenPresets(state.hiddenPresets)
+    } else {
+      setCustomIncomeCategories(state.customCategories)
+      saveCustomIncomeCategories(state.customCategories)
+      setIncomeCategoryOrder(state.categoryOrder)
+      saveIncomeCategoryOrder(state.categoryOrder)
+      setIncomeHiddenPresets(state.hiddenPresets)
+      saveIncomeHiddenPresets(state.hiddenPresets)
+    }
+  }
+
   const mergedExpenseCategories = useMemo(
     () => [
       ...EXPENSE_CATEGORIES,
@@ -545,6 +570,7 @@ export default function App() {
         onDeleteCustomCategory={handleDeleteCustomCategory}
         onSaveCategoryOrder={handleSaveCategoryOrder}
         onToggleHidePreset={handleToggleHidePreset}
+        onRestoreCategoryState={handleRestoreCategoryState}
       />
 
       {installPromptEvent && !installPromptDismissed ? (

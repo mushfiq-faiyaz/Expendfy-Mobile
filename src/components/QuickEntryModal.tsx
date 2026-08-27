@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -19,7 +19,7 @@ import {
   rectSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ChevronDown, Minus, Pencil, Plus, X } from 'lucide-react'
+import { ChevronDown, Minus, Pencil, Plus, Redo2, RotateCcw, Trash2, TriangleAlert, Undo2, X } from 'lucide-react'
 import { canEditIncome, formatDisplayDate, toISODate } from '../dateUtils'
 import type { CustomCategory, Expense, IncomeEntry } from '../types'
 import {
@@ -30,6 +30,12 @@ import {
 } from '../categories'
 import { TransactionCategoryDisplay } from './TransactionCategoryDisplay'
 import { CustomCategorySheet } from './CustomCategorySheet'
+
+export interface ManageCategorySnapshot {
+  customCategories: CustomCategory[]
+  categoryOrder: string[]
+  hiddenPresets: string[]
+}
 
 type Props = {
   open: boolean
@@ -59,6 +65,10 @@ type Props = {
   onDeleteCustomCategory?: (side: 'expense' | 'income', id: string) => void
   onSaveCategoryOrder?: (side: 'expense' | 'income', order: string[]) => void
   onToggleHidePreset?: (side: 'expense' | 'income', presetId: string) => void
+  onRestoreCategoryState?: (
+    side: 'expense' | 'income',
+    state: ManageCategorySnapshot,
+  ) => void
 }
 
 function formatDateTime(iso: string, timeFormat: '12h' | '24h'): string {
@@ -257,6 +267,7 @@ function CategoryPicker({
   onDeleteCustom,
   onSaveOrder,
   onToggleHidePreset,
+  onRestoreState,
 }: {
   side: 'expense' | 'income'
   customCategories?: CustomCategory[]
@@ -266,15 +277,24 @@ function CategoryPicker({
   onSelect: (cat: Category) => void
   onClose: () => void
   onOpenAddCustom: () => void
-  onEditCustom: (cat: Category) => void
+  onEditCustom: (cat: Category, onBeforeSave?: () => void) => void
   onDeleteCustom: (cat: Category) => void
   onSaveOrder: (order: string[]) => void
   onToggleHidePreset: (presetId: string) => void
+  onRestoreState?: (state: ManageCategorySnapshot) => void
 }) {
   const [isManageMode, setIsManageMode] = useState(false)
   const [manageTab, setManageTab] = useState<'all' | 'hidden'>('all')
   const [poppingId, setPoppingId] = useState<string | null>(null)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
+
+  // Undo / Redo history stacks (scoped to current manage mode session)
+  const [historyStack, setHistoryStack] = useState<ManageCategorySnapshot[]>([])
+  const [redoStack, setRedoStack] = useState<ManageCategorySnapshot[]>([])
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [deleteConfirmCat, setDeleteConfirmCat] = useState<Category | null>(null)
+
+  const dragStartSnapshotRef = useRef<ManageCategorySnapshot | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -342,8 +362,68 @@ function CategoryPicker({
     [basePresets, hiddenPresets],
   )
 
+  // Helper to snapshot current category state
+  function getSnapshot(): ManageCategorySnapshot {
+    return {
+      customCategories: customCategories.map((c) => ({ ...c })),
+      categoryOrder: [...categoryOrder],
+      hiddenPresets: [...hiddenPresets],
+    }
+  }
+
+  // Push new entry to history and clear redo stack
+  function pushHistory(snapshot: ManageCategorySnapshot) {
+    setHistoryStack((prev) => [...prev, snapshot])
+    setRedoStack([])
+  }
+
+  function enterManageMode() {
+    setIsManageMode(true)
+    setHistoryStack([])
+    setRedoStack([])
+    setManageTab('all')
+    setShowResetConfirm(false)
+    setDeleteConfirmCat(null)
+    triggerHaptic(10)
+  }
+
+  function exitManageMode() {
+    setIsManageMode(false)
+    setHistoryStack([])
+    setRedoStack([])
+    setManageTab('all')
+    setShowResetConfirm(false)
+    setDeleteConfirmCat(null)
+    triggerHaptic(10)
+  }
+
+  function handleUndo() {
+    if (historyStack.length === 0) return
+    triggerHaptic(10)
+    const prevSnapshot = historyStack[historyStack.length - 1]
+    const newHistory = historyStack.slice(0, historyStack.length - 1)
+    const currentSnapshot = getSnapshot()
+
+    setHistoryStack(newHistory)
+    setRedoStack((prev) => [...prev, currentSnapshot])
+    onRestoreState?.(prevSnapshot)
+  }
+
+  function handleRedo() {
+    if (redoStack.length === 0) return
+    triggerHaptic(10)
+    const nextSnapshot = redoStack[redoStack.length - 1]
+    const newRedo = redoStack.slice(0, redoStack.length - 1)
+    const currentSnapshot = getSnapshot()
+
+    setRedoStack(newRedo)
+    setHistoryStack((prev) => [...prev, currentSnapshot])
+    onRestoreState?.(nextSnapshot)
+  }
+
   function handleDragStart(event: DragStartEvent) {
     setActiveDragId(String(event.active.id))
+    dragStartSnapshotRef.current = getSnapshot()
     triggerHaptic(10)
   }
 
@@ -381,14 +461,33 @@ function CategoryPicker({
         onSaveOrder(newOrder)
       }
     }
+
+    if (dragStartSnapshotRef.current) {
+      const initialOrder = dragStartSnapshotRef.current.categoryOrder
+      const currentActiveIds = activeManageable.map((c) => c.id)
+      const currentFullOrder = [
+        ...currentActiveIds,
+        ...hiddenPresets.filter((h) => !currentActiveIds.includes(h)),
+      ]
+      const hasChanged =
+        initialOrder.length !== currentFullOrder.length ||
+        initialOrder.some((id, idx) => id !== currentFullOrder[idx])
+
+      if (hasChanged) {
+        pushHistory(dragStartSnapshotRef.current)
+      }
+      dragStartSnapshotRef.current = null
+    }
   }
 
   function handleDragCancel() {
     setActiveDragId(null)
+    dragStartSnapshotRef.current = null
   }
 
   function handleHidePresetWithPop(presetId: string) {
     triggerHaptic(10)
+    pushHistory(getSnapshot())
     setPoppingId(presetId)
     setTimeout(() => {
       onToggleHidePreset(presetId)
@@ -397,24 +496,59 @@ function CategoryPicker({
   }
 
   function handleDeleteCustomWithPop(cat: Category) {
-    const confirmed = window.confirm(`Delete "${cat.label}" category?`)
-    if (confirmed) {
-      triggerHaptic(10)
-      setPoppingId(cat.id)
-      setTimeout(() => {
-        onDeleteCustom(cat)
-        setPoppingId(null)
-      }, 80)
-    }
+    setDeleteConfirmCat(cat)
+  }
+
+  function handleConfirmDeleteCustom() {
+    if (!deleteConfirmCat) return
+    const cat = deleteConfirmCat
+    setDeleteConfirmCat(null)
+    triggerHaptic(10)
+    pushHistory(getSnapshot())
+    setPoppingId(cat.id)
+    setTimeout(() => {
+      onDeleteCustom(cat)
+      setPoppingId(null)
+    }, 80)
   }
 
   function handleRestorePresetWithPop(presetId: string) {
     triggerHaptic(10)
+    pushHistory(getSnapshot())
     setPoppingId(presetId)
     setTimeout(() => {
       onToggleHidePreset(presetId)
       setPoppingId(null)
     }, 80)
+  }
+
+  const isAlreadyDefault =
+    customCategories.length === 0 &&
+    hiddenPresets.length === 0 &&
+    (categoryOrder.length === 0 ||
+      (categoryOrder.length === basePresets.length &&
+        categoryOrder.every((id, idx) => id === basePresets[idx].id)))
+
+  function handleResetToDefault() {
+    if (isAlreadyDefault) return
+    setShowResetConfirm(true)
+  }
+
+  function handleConfirmReset() {
+    setShowResetConfirm(false)
+    triggerHaptic(10)
+    pushHistory(getSnapshot())
+    onRestoreState?.({
+      customCategories: [],
+      categoryOrder: [],
+      hiddenPresets: [],
+    })
+  }
+
+  function handleEditCustomItem(cat: Category) {
+    onEditCustom(cat, () => {
+      pushHistory(getSnapshot())
+    })
   }
 
   return (
@@ -424,8 +558,7 @@ function CategoryPicker({
         className="cat-picker__backdrop"
         onClick={() => {
           if (isManageMode) {
-            setIsManageMode(false)
-            setManageTab('all')
+            exitManageMode()
           } else {
             onClose()
           }
@@ -442,20 +575,46 @@ function CategoryPicker({
 
         <div className="cat-picker__header">
           <h3 className="cat-picker__title">Category</h3>
-          <button
-            type="button"
-            className={`cat-picker__manage-btn${isManageMode ? ' cat-picker__manage-btn--active' : ''}`}
-            onClick={() => {
-              setIsManageMode((prev) => {
-                const next = !prev
-                if (!next) setManageTab('all')
-                return next
-              })
-            }}
-            aria-label={isManageMode ? 'Done managing categories' : 'Manage categories'}
-          >
-            {isManageMode ? 'Done' : <Pencil size={14} />}
-          </button>
+          <div className="cat-picker__header-actions">
+            {isManageMode && (
+              <>
+                <button
+                  type="button"
+                  className="cat-picker__action-btn"
+                  onClick={handleUndo}
+                  disabled={historyStack.length === 0}
+                  aria-label="Undo"
+                  title="Undo"
+                >
+                  <Undo2 size={15} strokeWidth={2.2} />
+                </button>
+                <button
+                  type="button"
+                  className="cat-picker__action-btn"
+                  onClick={handleRedo}
+                  disabled={redoStack.length === 0}
+                  aria-label="Redo"
+                  title="Redo"
+                >
+                  <Redo2 size={15} strokeWidth={2.2} />
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              className={`cat-picker__manage-btn${isManageMode ? ' cat-picker__manage-btn--active' : ''}`}
+              onClick={() => {
+                if (isManageMode) {
+                  exitManageMode()
+                } else {
+                  enterManageMode()
+                }
+              }}
+              aria-label={isManageMode ? 'Done managing categories' : 'Manage categories'}
+            >
+              {isManageMode ? 'Done' : <Pencil size={14} />}
+            </button>
+          </div>
         </div>
 
         {/* ── Segmented Pill Control in Manage Mode ── */}
@@ -549,7 +708,7 @@ function CategoryPicker({
                       cat={cat}
                       isPopping={poppingId === cat.id}
                       onHidePreset={handleHidePresetWithPop}
-                      onEditCustom={onEditCustom}
+                      onEditCustom={handleEditCustomItem}
                       onDeleteCustom={handleDeleteCustomWithPop}
                     />
                   ))}
@@ -648,20 +807,132 @@ function CategoryPicker({
           </div>
         )}
 
-        <button
-          type="button"
-          className="cat-picker__dismiss"
-          onClick={() => {
-            if (isManageMode) {
-              setIsManageMode(false)
-              setManageTab('all')
-            } else {
-              onClose()
-            }
-          }}
-        >
-          {isManageMode ? 'Done' : 'Cancel'}
-        </button>
+        {isManageMode ? (
+          <button
+            type="button"
+            className="cat-picker__reset-btn"
+            onClick={handleResetToDefault}
+            disabled={isAlreadyDefault}
+            aria-label={`Reset ${side} categories to default`}
+          >
+            <RotateCcw size={14} strokeWidth={2.2} />
+            <span>Reset to default</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="cat-picker__dismiss"
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+        )}
+
+        {/* ── Custom In-App Confirmation Dialog: Reset to Default ── */}
+        <AnimatePresence>
+          {showResetConfirm && (
+            <motion.div
+              className="cat-confirm__backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowResetConfirm(false)}
+            >
+              <motion.div
+                className="cat-confirm__dialog"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="cat-reset-title"
+                aria-describedby="cat-reset-desc"
+                initial={{ opacity: 0, scale: 0.9, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 12 }}
+                transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="cat-confirm__icon-wrap">
+                  <TriangleAlert size={26} strokeWidth={2.2} />
+                </div>
+                <h4 id="cat-reset-title" className="cat-confirm__title">
+                  Reset {side === 'expense' ? 'Expense' : 'Income'} Categories?
+                </h4>
+                <p id="cat-reset-desc" className="cat-confirm__message">
+                  This will restore default categories, unhide all preset categories, and remove custom categories. You can undo this action anytime.
+                </p>
+                <div className="cat-confirm__actions">
+                  <button
+                    type="button"
+                    className="cat-confirm__btn cat-confirm__btn--cancel"
+                    onClick={() => setShowResetConfirm(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="cat-confirm__btn cat-confirm__btn--danger"
+                    onClick={handleConfirmReset}
+                  >
+                    <RotateCcw size={15} strokeWidth={2.2} />
+                    <span>Reset</span>
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Custom In-App Confirmation Dialog: Delete Custom Category ── */}
+        <AnimatePresence>
+          {deleteConfirmCat && (
+            <motion.div
+              className="cat-confirm__backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setDeleteConfirmCat(null)}
+            >
+              <motion.div
+                className="cat-confirm__dialog"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="cat-delete-title"
+                aria-describedby="cat-delete-desc"
+                initial={{ opacity: 0, scale: 0.9, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 12 }}
+                transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="cat-confirm__icon-wrap">
+                  <Trash2 size={26} strokeWidth={2.2} />
+                </div>
+                <h4 id="cat-delete-title" className="cat-confirm__title">
+                  Delete "{deleteConfirmCat.label}"?
+                </h4>
+                <p id="cat-delete-desc" className="cat-confirm__message">
+                  Are you sure you want to delete this custom category? You can undo this action in the manage session.
+                </p>
+                <div className="cat-confirm__actions">
+                  <button
+                    type="button"
+                    className="cat-confirm__btn cat-confirm__btn--cancel"
+                    onClick={() => setDeleteConfirmCat(null)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="cat-confirm__btn cat-confirm__btn--danger"
+                    onClick={handleConfirmDeleteCustom}
+                  >
+                    <Trash2 size={15} strokeWidth={2.2} />
+                    <span>Delete</span>
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </>
   )
@@ -695,6 +966,7 @@ export function QuickEntryModal({
   onDeleteCustomCategory,
   onSaveCategoryOrder,
   onToggleHidePreset,
+  onRestoreCategoryState,
 }: Props) {
   const [expenseDesc, setExpenseDesc] = useState('')
   const [expenseAmount, setExpenseAmount] = useState('')
@@ -705,6 +977,9 @@ export function QuickEntryModal({
   const [editingIncomeId, setEditingIncomeId] = useState<string | null>(null)
   const [editDesc, setEditDesc] = useState('')
   const [editAmount, setEditAmount] = useState('')
+
+  // Callback ref to snapshot manage-mode history before saving a custom category edit
+  const editBeforeSaveCallbackRef = useRef<(() => void) | null>(null)
 
   // Category picker state — expense
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
@@ -801,7 +1076,11 @@ export function QuickEntryModal({
     setCustomSheetOpen(true)
   }
 
-  function handleEditCustom(side: 'expense' | 'income', cat: Category): void {
+  function handleEditCustom(
+    side: 'expense' | 'income',
+    cat: Category,
+    onBeforeSave?: () => void,
+  ): void {
     const list = side === 'expense' ? customExpenseCategories : customIncomeCategories
     const found = list.find((c) => c.id === cat.id) || {
       id: cat.id,
@@ -809,6 +1088,7 @@ export function QuickEntryModal({
       icon: 'Sparkles',
       color: cat.color,
     }
+    editBeforeSaveCallbackRef.current = onBeforeSave ?? null
     setCustomSheetSide(side)
     setEditingCustomCat(found)
     setCustomSheetOpen(true)
@@ -826,6 +1106,8 @@ export function QuickEntryModal({
 
   function handleSaveCustomCategory(cat: CustomCategory): void {
     if (editingCustomCat) {
+      editBeforeSaveCallbackRef.current?.()
+      editBeforeSaveCallbackRef.current = null
       onUpdateCustomCategory?.(customSheetSide, cat)
       const updatedCatObj = customCategoryToCategory(cat)
       if (customSheetSide === 'expense' && selectedCategory?.id === cat.id) {
@@ -835,6 +1117,7 @@ export function QuickEntryModal({
         setSelectedIncomeCategory(updatedCatObj)
       }
     } else {
+      editBeforeSaveCallbackRef.current = null
       onAddCustomCategory?.(customSheetSide, cat)
       // Automatically select newly added custom category and insert its chip
       const catObj = customCategoryToCategory(cat)
@@ -1168,10 +1451,11 @@ export function QuickEntryModal({
           }}
           onClose={() => setCatPickerOpen(false)}
           onOpenAddCustom={() => handleOpenAddCustom('expense')}
-          onEditCustom={(cat) => handleEditCustom('expense', cat)}
+          onEditCustom={(cat, onBeforeSave) => handleEditCustom('expense', cat, onBeforeSave)}
           onDeleteCustom={(cat) => handleDeleteCustom('expense', cat)}
           onSaveOrder={(order) => onSaveCategoryOrder?.('expense', order)}
           onToggleHidePreset={(presetId) => onToggleHidePreset?.('expense', presetId)}
+          onRestoreState={(state) => onRestoreCategoryState?.('expense', state)}
         />
       )}
       {incomeCatPickerOpen && (
@@ -1187,10 +1471,11 @@ export function QuickEntryModal({
           }}
           onClose={() => setIncomeCatPickerOpen(false)}
           onOpenAddCustom={() => handleOpenAddCustom('income')}
-          onEditCustom={(cat) => handleEditCustom('income', cat)}
+          onEditCustom={(cat, onBeforeSave) => handleEditCustom('income', cat, onBeforeSave)}
           onDeleteCustom={(cat) => handleDeleteCustom('income', cat)}
           onSaveOrder={(order) => onSaveCategoryOrder?.('income', order)}
           onToggleHidePreset={(presetId) => onToggleHidePreset?.('income', presetId)}
+          onRestoreState={(state) => onRestoreCategoryState?.('income', state)}
         />
       )}
 
@@ -1202,6 +1487,7 @@ export function QuickEntryModal({
         existingCategoryNames={currentSideExistingNames}
         onSave={handleSaveCustomCategory}
         onClose={() => {
+          editBeforeSaveCallbackRef.current = null
           setCustomSheetOpen(false)
           setEditingCustomCat(null)
         }}

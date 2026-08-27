@@ -73,7 +73,9 @@ export function Header({
           {/* Spent today — tapping switches calendar to day-spend mode */}
           <button
             type="button"
-            className={`app-header__mode-btn${cellMode === 'day' ? ' app-header__mode-btn--active' : ''}`}
+            className={`app-header__mode-btn${
+              cellMode === 'day' ? ' app-header__mode-btn--active app-header__mode-btn--spent' : ''
+            }`}
             onClick={() => onCellModeChange('day')}
           >
             <span className="app-header__label">Spent</span>
@@ -85,7 +87,11 @@ export function Header({
           {/* Remain / Over — tapping switches calendar to over-budget mode */}
           <button
             type="button"
-            className={`app-header__mode-btn${cellMode === 'over' ? ' app-header__mode-btn--active' : ''}`}
+            className={`app-header__mode-btn${
+              cellMode === 'over'
+                ? ` app-header__mode-btn--active app-header__mode-btn--${isOverBudget ? 'over' : 'remain'}`
+                : ''
+            }`}
             data-balance={isOverBudget ? 'over' : 'remain'}
             onClick={() => onCellModeChange('over')}
           >

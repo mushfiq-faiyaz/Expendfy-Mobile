@@ -129,33 +129,33 @@ function CustomCategoryForm({
           </button>
         </div>
 
-        <div className="custom-cat-sheet__body">
-          {/* ── Live Preview ── */}
-          <div className="custom-cat-preview">
-            <span
-              className="custom-cat-preview__badge"
-              style={{
-                background: hexToRgba(selectedColor, 0.15),
-                border: `1px solid ${hexToRgba(selectedColor, 0.28)}`,
-                color: selectedColor,
-              }}
-            >
-              <CategoryIconPreview
-                iconName={selectedIcon}
-                size={22}
-                strokeWidth={2}
-              />
+        {/* ── Live Preview (Fixed) ── */}
+        <div className="custom-cat-preview">
+          <span
+            className="custom-cat-preview__badge"
+            style={{
+              background: hexToRgba(selectedColor, 0.15),
+              border: `1px solid ${hexToRgba(selectedColor, 0.28)}`,
+              color: selectedColor,
+            }}
+          >
+            <CategoryIconPreview
+              iconName={selectedIcon}
+              size={22}
+              strokeWidth={2}
+            />
+          </span>
+          <div className="custom-cat-preview__info">
+            <span className="custom-cat-preview__label">
+              {trimmedName || 'Category Name'}
             </span>
-            <div className="custom-cat-preview__info">
-              <span className="custom-cat-preview__label">
-                {trimmedName || 'Category Name'}
-              </span>
-              <span className="custom-cat-preview__sub">
-                {side === 'expense' ? 'Expense' : 'Income'} badge preview
-              </span>
-            </div>
+            <span className="custom-cat-preview__sub">
+              {side === 'expense' ? 'Expense' : 'Income'} badge preview
+            </span>
           </div>
+        </div>
 
+        <div className="custom-cat-sheet__body">
           {/* ── Name input ── */}
           <div className="custom-cat-field">
             <label htmlFor="custom-cat-name" className="custom-cat-field__label">

@@ -151,6 +151,9 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.app-header__panel--left .app-header__panel-title {
+  padding: 0 6px;
+}
 .app-header__panel-title--monthly {
   color: #facc15;
   margin: 0;
@@ -172,6 +175,9 @@ body {
 }
 .app-header__stat-row--avg {
   margin-top: 1px;
+  padding: 2px 6px;
+  border: 1px solid transparent;
+  box-sizing: border-box;
 }
 
 /* Mode-switch buttons (Today panel) — look like stat rows */
@@ -183,18 +189,33 @@ body {
   width: 100%;
   gap: 4px;
   min-height: 18px;
+  padding: 2px 6px;
   cursor: pointer;
-  border-radius: 4px;
-  transition: background 0.12s;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
   box-sizing: border-box;
 }
-.app-header__mode-btn--active {
-  /* subtle left accent stripe for active mode */
-  box-shadow: inset 2px 0 0 #ffffff;
-  padding-left: 4px;
-}
-.app-header__mode-btn:hover {
+.app-header__mode-btn:hover:not(.app-header__mode-btn--active) {
   background: rgba(255, 255, 255, 0.04);
+}
+.app-header__mode-btn--active {
+  box-shadow: none;
+}
+.app-header__mode-btn--active.app-header__mode-btn--spent,
+.app-header__mode-btn--active:not([data-balance]) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.app-header__mode-btn--active.app-header__mode-btn--remain,
+.app-header__mode-btn--active[data-balance="remain"] {
+  background: rgba(74, 222, 128, 0.12);
+  border-color: rgba(74, 222, 128, 0.22);
+}
+.app-header__mode-btn--active.app-header__mode-btn--over,
+.app-header__mode-btn--active[data-balance="over"] {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.22);
 }
 
 /* Label text — small, muted */
@@ -1771,6 +1792,45 @@ body {
   color: #f1f5f9;
 }
 
+.cat-picker__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.cat-picker__action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.cat-picker__action-btn:not(:disabled):hover {
+  background: rgba(148, 163, 184, 0.22);
+  color: #f1f5f9;
+  border-color: rgba(148, 163, 184, 0.4);
+}
+
+.cat-picker__action-btn:not(:disabled):active {
+  transform: scale(0.92);
+  background: rgba(148, 163, 184, 0.3);
+}
+
+.cat-picker__action-btn:disabled {
+  opacity: 0.30;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .cat-picker__manage-btn {
   display: inline-flex;
   align-items: center;
@@ -1957,6 +2017,159 @@ body {
 .cat-picker__dismiss:active {
   transform: scale(0.97);
   background: rgba(55, 72, 104, 0.80);
+}
+
+/* Reset to default button in Manage Mode */
+.cat-picker__reset-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(248, 113, 113, 0.22);
+  background: rgba(239, 68, 68, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #f87171;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.cat-picker__reset-btn:not(:disabled):hover {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(248, 113, 113, 0.45);
+  color: #fca5a5;
+}
+
+.cat-picker__reset-btn:not(:disabled):active {
+  transform: scale(0.98);
+  background: rgba(239, 68, 68, 0.24);
+}
+
+.cat-picker__reset-btn:disabled {
+  opacity: 0.32;
+  border-color: rgba(148, 163, 184, 0.15);
+  background: rgba(148, 163, 184, 0.05);
+  color: #64748b;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ─── Custom Category Confirmation Warning Dialog ─────────────── */
+.cat-confirm__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.78);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.cat-confirm__dialog {
+  width: 100%;
+  max-width: 320px;
+  background: linear-gradient(180deg, #131f36 0%, #0b1220 100%);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 24px;
+  padding: 24px 20px 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.cat-confirm__icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.32);
+  color: #f87171;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  box-shadow: 0 0 24px rgba(239, 68, 68, 0.2);
+}
+
+.cat-confirm__title {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.cat-confirm__message {
+  margin: 0 0 20px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #94a3b8;
+}
+
+.cat-confirm__actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.cat-confirm__btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cat-confirm__btn--cancel {
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  color: #cbd5e1;
+}
+
+.cat-confirm__btn--cancel:hover {
+  background: rgba(148, 163, 184, 0.22);
+  color: #ffffff;
+  border-color: rgba(148, 163, 184, 0.4);
+}
+
+.cat-confirm__btn--cancel:active {
+  transform: scale(0.97);
+}
+
+.cat-confirm__btn--danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border: 1px solid #f87171;
+  color: #ffffff;
+  box-shadow: 0 3px 14px rgba(239, 68, 68, 0.42);
+}
+
+.cat-confirm__btn--danger:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 4px 18px rgba(239, 68, 68, 0.55);
+}
+
+.cat-confirm__btn--danger:active {
+  transform: scale(0.97);
 }
 
 /* ─── Currency Picker Bottom Sheet ─────────────────────────────────
@@ -2482,6 +2695,7 @@ body {
   display: flex;
   flex-direction: column;
   background: #0d1829;
+  overflow: hidden;
 }
 
 .custom-cat-sheet__header {
@@ -2491,6 +2705,7 @@ body {
   padding: 4px 0 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .custom-cat-sheet__title {
@@ -2518,17 +2733,6 @@ body {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.custom-cat-sheet__body {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-bottom: 8px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
-}
-
 .custom-cat-preview {
   display: flex;
   align-items: center;
@@ -2537,6 +2741,20 @@ body {
   border-radius: 14px;
   background: rgba(30, 42, 64, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+  margin-bottom: 16px;
+}
+
+.custom-cat-sheet__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
 }
 
 .custom-cat-preview__badge {
@@ -2726,6 +2944,7 @@ body {
   padding-top: 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   margin-top: 8px;
+  flex-shrink: 0;
 }
 
 .custom-cat-btn-cancel {
