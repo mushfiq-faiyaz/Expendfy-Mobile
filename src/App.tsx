@@ -170,6 +170,16 @@ export default function App() {
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
     [incomeEntries, viewYear, viewMonth],
   )
+  const incomeDates = useMemo(() => {
+    const set = new Set<string>()
+    for (const entry of incomeEntries) {
+      const d = new Date(entry.createdAt)
+      if (!Number.isNaN(d.getTime())) {
+        set.add(toISODate(d))
+      }
+    }
+    return set
+  }, [incomeEntries])
 
   function handleMonthChange(y: number, m: number): void {
     setViewYear(y)
@@ -321,6 +331,7 @@ export default function App() {
           year={viewYear}
           monthIndex={viewMonth}
           spendByDate={spendByDate}
+          incomeDates={incomeDates}
           averageExpense={averageExpense}
           cellMode={cellMode}
           selectedDate={selectedDate}

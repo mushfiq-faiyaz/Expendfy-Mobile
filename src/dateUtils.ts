@@ -57,3 +57,27 @@ export function hoursRemaining24h(createdAtISO: string): number {
 export function canEditIncome(createdAtISO: string): boolean {
   return hoursRemaining24h(createdAtISO) > 0
 }
+
+export function formatCompactAmount(
+  n: number,
+  formatMoney: (v: number) => string,
+): string {
+  if (n < 1000) {
+    return formatMoney(n)
+  }
+
+  const sample = formatMoney(1)
+  const symbol = formatMoney(0).replace(/[\d.,\s]/g, '') || ''
+  const isPrefix = sample.startsWith(symbol)
+
+  let formattedNum: string
+  if (n >= 1_000_000) {
+    const val = (n / 1_000_000).toFixed(1).replace(/\.0$/, '')
+    formattedNum = `${val}M`
+  } else {
+    const val = (n / 1_000).toFixed(1).replace(/\.0$/, '')
+    formattedNum = `${val}k`
+  }
+
+  return isPrefix ? `${symbol}${formattedNum}` : `${formattedNum} ${symbol}`
+}

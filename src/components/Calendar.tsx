@@ -1,6 +1,7 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   daysInMonth,
+  formatCompactAmount,
   monthYearLabel,
   parseISODate,
   toISODate,
@@ -17,6 +18,7 @@ type Props = {
   year: number
   monthIndex: number
   spendByDate: Record<string, number>
+  incomeDates?: Set<string>
   averageExpense: number
   cellMode: 'day' | 'over'
   selectedDate: string
@@ -31,6 +33,7 @@ export function Calendar({
   year,
   monthIndex,
   spendByDate,
+  incomeDates,
   averageExpense,
   cellMode,
   selectedDate,
@@ -44,6 +47,11 @@ export function Calendar({
   const weekdayRowRef = useRef<HTMLDivElement>(null)
   const lastTapRef = useRef<{ iso: string; ts: number } | null>(null)
   const [cellPx, setCellPx] = useState(48)
+
+  const maxMonthSpend = useMemo(
+    () => Math.max(...Object.values(spendByDate), 0),
+    [spendByDate],
+  )
 
   const firstDow = weekdayIndexFirstOfMonth(year, monthIndex)
   const dim = daysInMonth(year, monthIndex)
@@ -194,6 +202,18 @@ export function Calendar({
             const isSelected = selectedDate === iso
             const isOverCell = cellMode === 'over' && hasInput && diff > 0
             const isRemainCell = cellMode === 'over' && hasInput && diff < 0
+            const hasIncome = inCurrentMonth && (incomeDates?.has(iso) ?? false)
+
+            // Subtle spend intensity from 0 to 1 for tonal background tint
+            const spendIntensity =
+              inCurrentMonth && hasInput && maxMonthSpend > 0
+                ? Math.min(1, Math.max(0.12, spent / maxMonthSpend))
+                : 0
+
+            const formattedDisplay =
+              cellValue > 0 ? formatCompactAmount(cellValue, formatMoney) : ''
+            const isLongAmount = formattedDisplay.length >= 7
+
             return (
               <button
                 key={iso}
@@ -201,11 +221,18 @@ export function Calendar({
                 className={[
                   'calendar__cell',
                   !inCurrentMonth && 'calendar__cell--otherMonth',
+                  hasInput && 'calendar__cell--has-spend',
+                  hasIncome && 'calendar__cell--has-income',
                   isToday && 'calendar__cell--today',
                   isSelected && 'calendar__cell--selected',
                 ]
                   .filter(Boolean)
                   .join(' ')}
+                style={
+                  hasInput && !isToday && !isSelected
+                    ? ({ '--spend-intensity': spendIntensity } as React.CSSProperties)
+                    : undefined
+                }
                 onClick={(e) => handleCellTap(iso, e.timeStamp)}
               >
                 <span className="calendar__day-num">{day}</span>
@@ -213,13 +240,14 @@ export function Calendar({
                   <span
                     className={[
                       'calendar__day-spend',
+                      isLongAmount && 'calendar__day-spend--compact',
                       isOverCell && 'calendar__day-spend--over',
                       isRemainCell && 'calendar__day-spend--remain',
                     ]
                       .filter(Boolean)
                       .join(' ')}
                   >
-                    {formatMoney(cellValue)}
+                    {formattedDisplay}
                   </span>
                 ) : null}
               </button>
