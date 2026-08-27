@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import type { Expense } from '../types'
 import { formatDisplayDate, toISODate } from '../dateUtils'
+import { EXPENSE_CATEGORIES } from '../categories'
+import { TransactionCategoryDisplay } from './TransactionCategoryDisplay'
 
 type Props = {
   open: boolean
@@ -119,7 +121,12 @@ export function ExpenseSheet({
                   <>
                     <div className="sheet__row-main">
                       <div>
-                        <span className="sheet__desc">{e.description}</span>
+                        <span className="sheet__desc">
+                          <TransactionCategoryDisplay
+                            description={e.description}
+                            categories={EXPENSE_CATEGORIES}
+                          />
+                        </span>
                         <span className="sheet__time">{formatExactDateTime(e.createdAt, timeFormat)}</span>
                       </div>
                       <span className="sheet__amt">{formatMoney(e.amount)}</span>

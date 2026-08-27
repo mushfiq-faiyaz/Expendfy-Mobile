@@ -1383,7 +1383,67 @@ body {
 .quick-modal__item-top {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 8px;
+  min-width: 0;
+}
+
+.qm-item__cat-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.qm-item__cat-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
+.qm-item__cat-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #f1f5f9;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.qm-item__cat-note {
+  font-weight: 400;
+  font-size: 0.80rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qm-item__desc-fallback {
+  font-weight: 500;
+  font-size: 0.85rem;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qm-item__amount {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #f8fafc;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.qm-item__amount--income {
+  color: #4ade80;
 }
 
 .quick-modal__item-meta {

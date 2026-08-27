@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import type { IncomeEntry } from '../types'
 import { canEditIncome, hoursRemaining24h, monthYearLabel } from '../dateUtils'
+import { INCOME_CATEGORIES } from '../categories'
+import { TransactionCategoryDisplay } from './TransactionCategoryDisplay'
 
 type Props = {
   open: boolean
@@ -157,7 +159,12 @@ export function IncomeSheet({
                       <>
                         <div className="sheet__row-main">
                           <div>
-                            <span className="sheet__desc">{e.description}</span>
+                            <span className="sheet__desc">
+                              <TransactionCategoryDisplay
+                                description={e.description}
+                                categories={INCOME_CATEGORIES}
+                              />
+                            </span>
                             <span className="sheet__time">{formatExactDateTime(e.createdAt, timeFormat)}</span>
                           </div>
                           <span className="sheet__amt sheet__amt--income">{formatMoney(e.amount)}</span>
