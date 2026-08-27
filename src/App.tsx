@@ -5,10 +5,24 @@ import { Header } from './components/Header'
 import { IncomeSheet } from './components/IncomeSheet'
 import { QuickEntryModal } from './components/QuickEntryModal'
 import { SideDrawer } from './components/SideDrawer'
-import { loadExpenses, loadIncome, saveExpenses, saveIncome } from './storage'
+import {
+  loadCustomExpenseCategories,
+  loadCustomIncomeCategories,
+  loadExpenses,
+  loadIncome,
+  saveCustomExpenseCategories,
+  saveCustomIncomeCategories,
+  saveExpenses,
+  saveIncome,
+} from './storage'
+import {
+  EXPENSE_CATEGORIES,
+  INCOME_CATEGORIES,
+  customCategoryToCategory,
+} from './categories'
 import { daysInMonth, parseISODate, startOfToday, toISODate } from './dateUtils'
 import { useNotification } from './hooks/useNotification'
-import type { Expense, IncomeEntry } from './types'
+import type { CustomCategory, Expense, IncomeEntry } from './types'
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
@@ -69,6 +83,12 @@ export default function App() {
   const CURRENCY_OPTIONS = ['TRY', 'USD', 'EUR', 'GBP', 'INR', 'JPY', 'AED', 'BDT'] as const
   const [expenses, setExpenses] = useState<Expense[]>(() => loadExpenses())
   const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>(() => loadIncome())
+  const [customExpenseCategories, setCustomExpenseCategories] = useState<CustomCategory[]>(() =>
+    loadCustomExpenseCategories(),
+  )
+  const [customIncomeCategories, setCustomIncomeCategories] = useState<CustomCategory[]>(() =>
+    loadCustomIncomeCategories(),
+  )
   const [currency, setCurrency] = useState<string>(
     () => localStorage.getItem(CURRENCY_KEY) || 'TRY',
   )
@@ -308,6 +328,70 @@ export default function App() {
     })
   }
 
+  function handleAddCustomCategory(side: 'expense' | 'income', cat: CustomCategory): void {
+    if (side === 'expense') {
+      setCustomExpenseCategories((prev) => {
+        const next = [...prev, cat]
+        saveCustomExpenseCategories(next)
+        return next
+      })
+    } else {
+      setCustomIncomeCategories((prev) => {
+        const next = [...prev, cat]
+        saveCustomIncomeCategories(next)
+        return next
+      })
+    }
+  }
+
+  function handleUpdateCustomCategory(side: 'expense' | 'income', cat: CustomCategory): void {
+    if (side === 'expense') {
+      setCustomExpenseCategories((prev) => {
+        const next = prev.map((c) => (c.id === cat.id ? cat : c))
+        saveCustomExpenseCategories(next)
+        return next
+      })
+    } else {
+      setCustomIncomeCategories((prev) => {
+        const next = prev.map((c) => (c.id === cat.id ? cat : c))
+        saveCustomIncomeCategories(next)
+        return next
+      })
+    }
+  }
+
+  function handleDeleteCustomCategory(side: 'expense' | 'income', id: string): void {
+    if (side === 'expense') {
+      setCustomExpenseCategories((prev) => {
+        const next = prev.filter((c) => c.id !== id)
+        saveCustomExpenseCategories(next)
+        return next
+      })
+    } else {
+      setCustomIncomeCategories((prev) => {
+        const next = prev.filter((c) => c.id !== id)
+        saveCustomIncomeCategories(next)
+        return next
+      })
+    }
+  }
+
+  const mergedExpenseCategories = useMemo(
+    () => [
+      ...EXPENSE_CATEGORIES,
+      ...customExpenseCategories.map(customCategoryToCategory),
+    ],
+    [customExpenseCategories],
+  )
+
+  const mergedIncomeCategories = useMemo(
+    () => [
+      ...INCOME_CATEGORIES,
+      ...customIncomeCategories.map(customCategoryToCategory),
+    ],
+    [customIncomeCategories],
+  )
+
   return (
     <div className="app">
       <Header
@@ -358,6 +442,7 @@ export default function App() {
         open={expenseSheetOpen}
         dateIso={selectedDate}
         expenses={expenses}
+        categories={mergedExpenseCategories}
         formatMoney={formatMoney}
         timeFormat={timeFormat}
         onClose={() => setExpenseSheetOpen(false)}
@@ -371,6 +456,7 @@ export default function App() {
         year={viewYear}
         monthIndex={viewMonth}
         entries={incomeEntries}
+        categories={mergedIncomeCategories}
         monthlyTotal={monthlyIncome}
         formatMoney={formatMoney}
         timeFormat={timeFormat}
@@ -388,6 +474,8 @@ export default function App() {
         currencyOptions={CURRENCY_OPTIONS}
         expensesForDate={expensesForSelectedDate}
         incomeForMonth={incomeForCurrentMonth}
+        customExpenseCategories={customExpenseCategories}
+        customIncomeCategories={customIncomeCategories}
         formatMoney={formatMoney}
         timeFormat={timeFormat}
         onClose={() => setQuickEntryOpen(false)}
@@ -398,6 +486,9 @@ export default function App() {
         onUpdateIncome={updateIncome}
         onDeleteIncome={deleteIncome}
         onCurrencyChange={handleCurrencyChange}
+        onAddCustomCategory={handleAddCustomCategory}
+        onUpdateCustomCategory={handleUpdateCustomCategory}
+        onDeleteCustomCategory={handleDeleteCustomCategory}
       />
 
       {installPromptEvent && !installPromptDismissed ? (

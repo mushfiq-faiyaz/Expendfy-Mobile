@@ -12,3 +12,10 @@ export type IncomeEntry = {
   description: string
   createdAt: string
 }
+
+export type CustomCategory = {
+  id: string
+  name: string
+  icon: string
+  color: string
+}

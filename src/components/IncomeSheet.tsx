@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { IncomeEntry } from '../types'
 import { canEditIncome, hoursRemaining24h, monthYearLabel } from '../dateUtils'
-import { INCOME_CATEGORIES } from '../categories'
+import { INCOME_CATEGORIES, type Category } from '../categories'
 import { TransactionCategoryDisplay } from './TransactionCategoryDisplay'
 
 type Props = {
@@ -9,6 +9,7 @@ type Props = {
   year: number
   monthIndex: number
   entries: IncomeEntry[]
+  categories?: Category[]
   monthlyTotal: number
   formatMoney: (n: number) => string
   timeFormat: '12h' | '24h'
@@ -35,6 +36,7 @@ export function IncomeSheet({
   year,
   monthIndex,
   entries,
+  categories = INCOME_CATEGORIES,
   monthlyTotal,
   formatMoney,
   timeFormat,
@@ -162,7 +164,7 @@ export function IncomeSheet({
                             <span className="sheet__desc">
                               <TransactionCategoryDisplay
                                 description={e.description}
-                                categories={INCOME_CATEGORIES}
+                                categories={categories}
                               />
                             </span>
                             <span className="sheet__time">{formatExactDateTime(e.createdAt, timeFormat)}</span>

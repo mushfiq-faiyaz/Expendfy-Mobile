@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import type { Expense } from '../types'
 import { formatDisplayDate, toISODate } from '../dateUtils'
-import { EXPENSE_CATEGORIES } from '../categories'
+import { EXPENSE_CATEGORIES, type Category } from '../categories'
 import { TransactionCategoryDisplay } from './TransactionCategoryDisplay'
 
 type Props = {
   open: boolean
   dateIso: string
   expenses: Expense[]
+  categories?: Category[]
   formatMoney: (n: number) => string
   timeFormat: '12h' | '24h'
   onClose: () => void
@@ -32,6 +33,7 @@ export function ExpenseSheet({
   open,
   dateIso,
   expenses,
+  categories = EXPENSE_CATEGORIES,
   formatMoney,
   timeFormat,
   onClose,
@@ -39,7 +41,6 @@ export function ExpenseSheet({
   onUpdate,
   onDelete,
 }: Props) {
-
   const [desc, setDesc] = useState('')
   const [amount, setAmount] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -62,6 +63,7 @@ export function ExpenseSheet({
   }
 
   function startEdit(e: Expense): void {
+    if (locked) return
     setEditingId(e.id)
     setEditDesc(e.description)
     setEditAmount(String(e.amount))
@@ -83,6 +85,7 @@ export function ExpenseSheet({
         <h2 id="expense-sheet-title" className="sheet__title">
           {formatDisplayDate(dateIso)}
         </h2>
+
         {locked ? (
           <p className="sheet__locked">Future dates are read-only.</p>
         ) : null}
@@ -124,7 +127,7 @@ export function ExpenseSheet({
                         <span className="sheet__desc">
                           <TransactionCategoryDisplay
                             description={e.description}
-                            categories={EXPENSE_CATEGORIES}
+                            categories={categories}
                           />
                         </span>
                         <span className="sheet__time">{formatExactDateTime(e.createdAt, timeFormat)}</span>

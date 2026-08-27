@@ -1,13 +1,15 @@
-import { useState } from 'react'
-import { ChevronDown, X } from 'lucide-react'
+import { useMemo, useRef, useState } from 'react'
+import { ChevronDown, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { canEditIncome, formatDisplayDate, toISODate } from '../dateUtils'
-import type { Expense, IncomeEntry } from '../types'
+import type { CustomCategory, Expense, IncomeEntry } from '../types'
 import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
+  customCategoryToCategory,
   type Category,
 } from '../categories'
 import { TransactionCategoryDisplay } from './TransactionCategoryDisplay'
+import { CustomCategorySheet } from './CustomCategorySheet'
 
 type Props = {
   open: boolean
@@ -16,6 +18,8 @@ type Props = {
   currencyOptions: readonly string[]
   expensesForDate: Expense[]
   incomeForMonth: IncomeEntry[]
+  customExpenseCategories?: CustomCategory[]
+  customIncomeCategories?: CustomCategory[]
   formatMoney: (n: number) => string
   timeFormat: '12h' | '24h'
   onClose: () => void
@@ -26,6 +30,9 @@ type Props = {
   onUpdateIncome: (id: string, description: string, amount: number) => void
   onDeleteIncome: (id: string) => void
   onCurrencyChange: (currency: string) => void
+  onAddCustomCategory?: (side: 'expense' | 'income', cat: CustomCategory) => void
+  onUpdateCustomCategory?: (side: 'expense' | 'income', cat: CustomCategory) => void
+  onDeleteCustomCategory?: (side: 'expense' | 'income', id: string) => void
 }
 
 function formatDateTime(iso: string, timeFormat: '12h' | '24h'): string {
@@ -63,18 +70,112 @@ function CategoryChip({ cat, onRemove }: { cat: Category; onRemove: () => void }
   )
 }
 
+// ── Individual category tile with long-press support for custom categories ──
+function CategoryPickerItem({
+  cat,
+  isActive,
+  onSelect,
+  onOpenMenu,
+}: {
+  cat: Category
+  isActive: boolean
+  onSelect: (cat: Category) => void
+  onOpenMenu?: (cat: Category) => void
+}) {
+  const timerRef = useRef<number | null>(null)
+  const isLongPressRef = useRef(false)
+
+  function startPress() {
+    if (!cat.isCustom || !onOpenMenu) return
+    isLongPressRef.current = false
+    timerRef.current = window.setTimeout(() => {
+      isLongPressRef.current = true
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        try {
+          navigator.vibrate(35)
+        } catch {
+          // ignore
+        }
+      }
+      onOpenMenu(cat)
+    }, 500)
+  }
+
+  function endPress() {
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      className={`cat-picker__item${isActive ? ' cat-picker__item--active' : ''}${cat.isCustom ? ' cat-picker__item--custom' : ''}`}
+      onClick={() => {
+        if (isLongPressRef.current) {
+          isLongPressRef.current = false
+          return
+        }
+        onSelect(cat)
+      }}
+      onMouseDown={startPress}
+      onMouseUp={endPress}
+      onMouseLeave={endPress}
+      onTouchStart={startPress}
+      onTouchEnd={endPress}
+      onTouchMove={endPress}
+      onContextMenu={(e) => {
+        if (cat.isCustom && onOpenMenu) {
+          e.preventDefault()
+          onOpenMenu(cat)
+        }
+      }}
+      aria-pressed={isActive}
+    >
+      <span
+        className="cat-picker__icon"
+        style={{
+          background: cat.bg,
+          border: `1px solid ${cat.border}`,
+          color: cat.color,
+        }}
+      >
+        <cat.Icon size={20} strokeWidth={1.8} />
+      </span>
+      <span className="cat-picker__label">{cat.label}</span>
+    </button>
+  )
+}
+
 // ── Category picker bottom-sheet / modal ──────────────────────────
 function CategoryPicker({
   categories,
   selected,
   onSelect,
   onClose,
+  onOpenAddCustom,
+  onEditCustom,
+  onDeleteCustom,
 }: {
   categories: Category[]
   selected: string | null
   onSelect: (cat: Category) => void
   onClose: () => void
+  onOpenAddCustom: () => void
+  onEditCustom: (cat: Category) => void
+  onDeleteCustom: (cat: Category) => void
 }) {
+  const [popoverCat, setPopoverCat] = useState<Category | null>(null)
+
+  function handleDelete(cat: Category) {
+    const confirmed = window.confirm(`Delete "${cat.label}" category?`)
+    if (confirmed) {
+      onDeleteCustom(cat)
+      setPopoverCat(null)
+    }
+  }
+
   return (
     <>
       <button
@@ -90,34 +191,80 @@ function CategoryPicker({
           {categories.map((cat) => {
             const isActive = selected === cat.id
             return (
-              <button
+              <CategoryPickerItem
                 key={cat.id}
-                type="button"
-                className={`cat-picker__item${isActive ? ' cat-picker__item--active' : ''}`}
-                onClick={() => onSelect(cat)}
-                aria-pressed={isActive}
-              >
-                <span
-                  className="cat-picker__icon"
-                  style={{
-                    background: cat.bg,
-                    border: `1px solid ${cat.border}`,
-                    color: cat.color,
-                    ...(cat.id === 'other'
-                      ? { borderStyle: 'dashed' }
-                      : {}),
-                  }}
-                >
-                  <cat.Icon size={20} strokeWidth={1.8} />
-                </span>
-                <span className="cat-picker__label">{cat.label}</span>
-              </button>
+                cat={cat}
+                isActive={isActive}
+                onSelect={onSelect}
+                onOpenMenu={setPopoverCat}
+              />
             )
           })}
+
+          {/* + Custom tile - always last in the grid */}
+          <button
+            type="button"
+            className="cat-picker__item cat-picker__item--add"
+            onClick={onOpenAddCustom}
+            aria-label="Add custom category"
+          >
+            <span className="cat-picker__icon cat-picker__icon--add">
+              <Plus size={20} strokeWidth={1.8} />
+            </span>
+            <span className="cat-picker__label cat-picker__label--add">+ Custom</span>
+          </button>
         </div>
         <button type="button" className="cat-picker__dismiss" onClick={onClose}>
           Cancel
         </button>
+
+        {/* ── Long press popover menu ── */}
+        {popoverCat && (
+          <>
+            <button
+              type="button"
+              className="cat-popover__backdrop"
+              onClick={() => setPopoverCat(null)}
+              aria-label="Close menu"
+            />
+            <div className="cat-popover" role="menu">
+              <div className="cat-popover__header">
+                <span
+                  className="cat-popover__badge"
+                  style={{
+                    background: popoverCat.bg,
+                    border: `1px solid ${popoverCat.border}`,
+                    color: popoverCat.color,
+                  }}
+                >
+                  <popoverCat.Icon size={16} strokeWidth={2} />
+                </span>
+                <span className="cat-popover__label">{popoverCat.label}</span>
+              </div>
+              <div className="cat-popover__actions">
+                <button
+                  type="button"
+                  className="cat-popover__btn"
+                  onClick={() => {
+                    onEditCustom(popoverCat)
+                    setPopoverCat(null)
+                  }}
+                >
+                  <Pencil size={15} />
+                  <span>Edit</span>
+                </button>
+                <button
+                  type="button"
+                  className="cat-popover__btn cat-popover__btn--delete"
+                  onClick={() => handleDelete(popoverCat)}
+                >
+                  <Trash2 size={15} />
+                  <span>Delete</span>
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </>
   )
@@ -130,6 +277,8 @@ export function QuickEntryModal({
   currencyOptions: _currencyOptions,
   expensesForDate,
   incomeForMonth,
+  customExpenseCategories = [],
+  customIncomeCategories = [],
   formatMoney,
   timeFormat,
   onClose,
@@ -140,6 +289,9 @@ export function QuickEntryModal({
   onUpdateIncome,
   onDeleteIncome,
   onCurrencyChange: _onCurrencyChange,
+  onAddCustomCategory,
+  onUpdateCustomCategory,
+  onDeleteCustomCategory,
 }: Props) {
   const [expenseDesc, setExpenseDesc] = useState('')
   const [expenseAmount, setExpenseAmount] = useState('')
@@ -158,6 +310,28 @@ export function QuickEntryModal({
   // Category picker state — income
   const [selectedIncomeCategory, setSelectedIncomeCategory] = useState<Category | null>(null)
   const [incomeCatPickerOpen, setIncomeCatPickerOpen] = useState(false)
+
+  // Custom category creation/editing bottom sheet state
+  const [customSheetOpen, setCustomSheetOpen] = useState(false)
+  const [customSheetSide, setCustomSheetSide] = useState<'expense' | 'income'>('expense')
+  const [editingCustomCat, setEditingCustomCat] = useState<CustomCategory | null>(null)
+
+  // Merged categories (presets + custom)
+  const mergedExpenseCategories = useMemo(
+    () => [
+      ...EXPENSE_CATEGORIES,
+      ...customExpenseCategories.map(customCategoryToCategory),
+    ],
+    [customExpenseCategories],
+  )
+
+  const mergedIncomeCategories = useMemo(
+    () => [
+      ...INCOME_CATEGORIES,
+      ...customIncomeCategories.map(customCategoryToCategory),
+    ],
+    [customIncomeCategories],
+  )
 
   if (!open) return null
 
@@ -217,6 +391,62 @@ export function QuickEntryModal({
     setEditingIncomeId(null)
   }
 
+  // ── Custom Category Handlers ──
+  function handleOpenAddCustom(side: 'expense' | 'income'): void {
+    setCustomSheetSide(side)
+    setEditingCustomCat(null)
+    setCustomSheetOpen(true)
+  }
+
+  function handleEditCustom(side: 'expense' | 'income', cat: Category): void {
+    const list = side === 'expense' ? customExpenseCategories : customIncomeCategories
+    const found = list.find((c) => c.id === cat.id) || {
+      id: cat.id,
+      name: cat.label,
+      icon: 'Sparkles',
+      color: cat.color,
+    }
+    setCustomSheetSide(side)
+    setEditingCustomCat(found)
+    setCustomSheetOpen(true)
+  }
+
+  function handleDeleteCustom(side: 'expense' | 'income', cat: Category): void {
+    onDeleteCustomCategory?.(side, cat.id)
+    if (side === 'expense' && selectedCategory?.id === cat.id) {
+      setSelectedCategory(null)
+    }
+    if (side === 'income' && selectedIncomeCategory?.id === cat.id) {
+      setSelectedIncomeCategory(null)
+    }
+  }
+
+  function handleSaveCustomCategory(cat: CustomCategory): void {
+    if (editingCustomCat) {
+      onUpdateCustomCategory?.(customSheetSide, cat)
+      const updatedCatObj = customCategoryToCategory(cat)
+      if (customSheetSide === 'expense' && selectedCategory?.id === cat.id) {
+        setSelectedCategory(updatedCatObj)
+      }
+      if (customSheetSide === 'income' && selectedIncomeCategory?.id === cat.id) {
+        setSelectedIncomeCategory(updatedCatObj)
+      }
+    } else {
+      onAddCustomCategory?.(customSheetSide, cat)
+      // Automatically select newly added custom category and insert its chip
+      const catObj = customCategoryToCategory(cat)
+      if (customSheetSide === 'expense') {
+        setSelectedCategory(catObj)
+        setCatPickerOpen(false)
+      } else {
+        setSelectedIncomeCategory(catObj)
+        setIncomeCatPickerOpen(false)
+      }
+    }
+    setCustomSheetOpen(false)
+    setEditingCustomCat(null)
+  }
+
   // ── Live value previews derived from existing props ──
   const expenseDayTotal = expensesForDate.reduce((s, e) => s + e.amount, 0)
   const incomeMonthTotal = incomeForMonth.reduce((s, e) => s + e.amount, 0)
@@ -224,6 +454,11 @@ export function QuickEntryModal({
   // Future dates are read-only for expenses
   const todayIso = toISODate(new Date())
   const isFutureDate = dateIso > todayIso
+
+  const currentSideExistingNames =
+    customSheetSide === 'expense'
+      ? mergedExpenseCategories.map((c) => c.label)
+      : mergedIncomeCategories.map((c) => c.label)
 
   return (
     <>
@@ -255,7 +490,7 @@ export function QuickEntryModal({
             {/* Label + sub-label */}
             <span className="qm-row__body">
               <span className="qm-row__label">Expense</span>
-              <span className="qm-row__sub">Today</span>
+              <span className="qm-row__sub">Selected date</span>
             </span>
             {/* Live value + chevron */}
             <span className="qm-row__right">
@@ -270,8 +505,8 @@ export function QuickEntryModal({
             <div className="quick-modal__collapse-inner">
               <div className="quick-modal__panel">
                 {isFutureDate ? (
-                  <p className="quick-modal__empty" style={{ fontStyle: 'italic', padding: '4px 0 8px' }}>
-                    Future dates are read-only.
+                  <p className="quick-modal__readonly-hint">
+                    Future dates are read-only for expenses.
                   </p>
                 ) : (
                   <>
@@ -316,7 +551,7 @@ export function QuickEntryModal({
                 )}
                 <ul className="quick-modal__list">
                   {expensesForDate.length === 0 ? (
-                    <li className="quick-modal__empty">No expenses yet</li>
+                    <li className="quick-modal__empty">No expenses on this date</li>
                   ) : (
                     expensesForDate
                       .slice()
@@ -349,7 +584,7 @@ export function QuickEntryModal({
                               <div className="quick-modal__item-top">
                                 <TransactionCategoryDisplay
                                   description={e.description}
-                                  categories={EXPENSE_CATEGORIES}
+                                  categories={mergedExpenseCategories}
                                 />
                                 <span className="qm-item__amount">{formatMoney(e.amount)}</span>
                               </div>
@@ -475,7 +710,7 @@ export function QuickEntryModal({
                               <div className="quick-modal__item-top">
                                 <TransactionCategoryDisplay
                                   description={e.description}
-                                  categories={INCOME_CATEGORIES}
+                                  categories={mergedIncomeCategories}
                                 />
                                 <span className="qm-item__amount qm-item__amount--income">
                                   {formatMoney(e.amount)}
@@ -516,29 +751,48 @@ export function QuickEntryModal({
       </div>
 
 
-      {/* ── Category picker overlays — rendered outside the modal card so they sit on top ── */}
+      {/* ── Category picker overlays ── */}
       {catPickerOpen && (
         <CategoryPicker
-          categories={EXPENSE_CATEGORIES}
+          categories={mergedExpenseCategories}
           selected={selectedCategory?.id ?? null}
           onSelect={(cat) => {
             setSelectedCategory(cat)
             setCatPickerOpen(false)
           }}
           onClose={() => setCatPickerOpen(false)}
+          onOpenAddCustom={() => handleOpenAddCustom('expense')}
+          onEditCustom={(cat) => handleEditCustom('expense', cat)}
+          onDeleteCustom={(cat) => handleDeleteCustom('expense', cat)}
         />
       )}
       {incomeCatPickerOpen && (
         <CategoryPicker
-          categories={INCOME_CATEGORIES}
+          categories={mergedIncomeCategories}
           selected={selectedIncomeCategory?.id ?? null}
           onSelect={(cat) => {
             setSelectedIncomeCategory(cat)
             setIncomeCatPickerOpen(false)
           }}
           onClose={() => setIncomeCatPickerOpen(false)}
+          onOpenAddCustom={() => handleOpenAddCustom('income')}
+          onEditCustom={(cat) => handleEditCustom('income', cat)}
+          onDeleteCustom={(cat) => handleDeleteCustom('income', cat)}
         />
       )}
+
+      {/* ── New / Edit Custom Category bottom sheet ── */}
+      <CustomCategorySheet
+        open={customSheetOpen}
+        side={customSheetSide}
+        editingCategory={editingCustomCat}
+        existingCategoryNames={currentSideExistingNames}
+        onSave={handleSaveCustomCategory}
+        onClose={() => {
+          setCustomSheetOpen(false)
+          setEditingCustomCat(null)
+        }}
+      />
     </>
   )
 }

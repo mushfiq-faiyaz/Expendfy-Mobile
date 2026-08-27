@@ -23,7 +23,6 @@ export function TransactionCategoryDisplay({
           background: category.bg,
           border: `1px solid ${category.border}`,
           color: category.color,
-          ...(category.id === 'other' ? { borderStyle: 'dashed' } : {}),
         }}
         aria-hidden
       >
