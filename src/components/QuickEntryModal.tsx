@@ -183,8 +183,8 @@ function CategoryPicker({
 export function QuickEntryModal({
   open,
   dateIso,
-  currency,
-  currencyOptions,
+  currency: _currency,
+  currencyOptions: _currencyOptions,
   expensesForDate,
   incomeForMonth,
   formatMoney,
@@ -196,7 +196,7 @@ export function QuickEntryModal({
   onAddIncome,
   onUpdateIncome,
   onDeleteIncome,
-  onCurrencyChange,
+  onCurrencyChange: _onCurrencyChange,
 }: Props) {
   const [expenseDesc, setExpenseDesc] = useState('')
   const [expenseAmount, setExpenseAmount] = useState('')

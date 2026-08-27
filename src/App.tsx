@@ -64,8 +64,6 @@ export default function App() {
 
   const today = new Date()
   const todayIso = toISODate(today)
-  const todayYear = today.getFullYear()
-  const todayMonth = today.getMonth()
   const CURRENCY_KEY = 'expendfy_currency'
   const TIME_FORMAT_KEY = 'expendfy_time_format'
   const CURRENCY_OPTIONS = ['TRY', 'USD', 'EUR', 'GBP', 'INR', 'JPY', 'AED', 'BDT'] as const
@@ -223,12 +221,6 @@ export default function App() {
   function handleDoubleTapDate(dateIso: string): void {
     setSelectedDate(dateIso)
     setQuickEntryOpen(true)
-  }
-
-  function jumpToTodayContext(): void {
-    setSelectedDate(todayIso)
-    setViewYear(todayYear)
-    setViewMonth(todayMonth)
   }
 
   function addExpense(description: string, amount: number): void {
