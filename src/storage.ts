@@ -4,6 +4,10 @@ const EXPENSES_KEY = 'expendfy_expenses'
 const INCOME_KEY = 'expendfy_income'
 const CUSTOM_EXPENSE_CATEGORIES_KEY = 'expendfy_custom_expense_categories'
 const CUSTOM_INCOME_CATEGORIES_KEY = 'expendfy_custom_income_categories'
+const EXPENSE_CATEGORY_ORDER_KEY = 'expendfy_expense_category_order'
+const INCOME_CATEGORY_ORDER_KEY = 'expendfy_income_category_order'
+const EXPENSE_HIDDEN_PRESETS_KEY = 'expendfy_expense_hidden_presets'
+const INCOME_HIDDEN_PRESETS_KEY = 'expendfy_income_hidden_presets'
 
 export function loadExpenses(): Expense[] {
   try {
@@ -64,4 +68,65 @@ export function loadCustomIncomeCategories(): CustomCategory[] {
 export function saveCustomIncomeCategories(categories: CustomCategory[]): void {
   localStorage.setItem(CUSTOM_INCOME_CATEGORIES_KEY, JSON.stringify(categories))
 }
+
+export function loadExpenseCategoryOrder(): string[] {
+  try {
+    const raw = localStorage.getItem(EXPENSE_CATEGORY_ORDER_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as unknown
+    return Array.isArray(parsed) ? (parsed as string[]) : []
+  } catch {
+    return []
+  }
+}
+
+export function saveExpenseCategoryOrder(order: string[]): void {
+  localStorage.setItem(EXPENSE_CATEGORY_ORDER_KEY, JSON.stringify(order))
+}
+
+export function loadIncomeCategoryOrder(): string[] {
+  try {
+    const raw = localStorage.getItem(INCOME_CATEGORY_ORDER_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as unknown
+    return Array.isArray(parsed) ? (parsed as string[]) : []
+  } catch {
+    return []
+  }
+}
+
+export function saveIncomeCategoryOrder(order: string[]): void {
+  localStorage.setItem(INCOME_CATEGORY_ORDER_KEY, JSON.stringify(order))
+}
+
+export function loadExpenseHiddenPresets(): string[] {
+  try {
+    const raw = localStorage.getItem(EXPENSE_HIDDEN_PRESETS_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as unknown
+    return Array.isArray(parsed) ? (parsed as string[]) : []
+  } catch {
+    return []
+  }
+}
+
+export function saveExpenseHiddenPresets(hidden: string[]): void {
+  localStorage.setItem(EXPENSE_HIDDEN_PRESETS_KEY, JSON.stringify(hidden))
+}
+
+export function loadIncomeHiddenPresets(): string[] {
+  try {
+    const raw = localStorage.getItem(INCOME_HIDDEN_PRESETS_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as unknown
+    return Array.isArray(parsed) ? (parsed as string[]) : []
+  } catch {
+    return []
+  }
+}
+
+export function saveIncomeHiddenPresets(hidden: string[]): void {
+  localStorage.setItem(INCOME_HIDDEN_PRESETS_KEY, JSON.stringify(hidden))
+}
+
 

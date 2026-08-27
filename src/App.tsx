@@ -14,6 +14,14 @@ import {
   saveCustomIncomeCategories,
   saveExpenses,
   saveIncome,
+  loadExpenseCategoryOrder,
+  saveExpenseCategoryOrder,
+  loadIncomeCategoryOrder,
+  saveIncomeCategoryOrder,
+  loadExpenseHiddenPresets,
+  saveExpenseHiddenPresets,
+  loadIncomeHiddenPresets,
+  saveIncomeHiddenPresets,
 } from './storage'
 import {
   EXPENSE_CATEGORIES,
@@ -88,6 +96,18 @@ export default function App() {
   )
   const [customIncomeCategories, setCustomIncomeCategories] = useState<CustomCategory[]>(() =>
     loadCustomIncomeCategories(),
+  )
+  const [expenseCategoryOrder, setExpenseCategoryOrder] = useState<string[]>(() =>
+    loadExpenseCategoryOrder(),
+  )
+  const [incomeCategoryOrder, setIncomeCategoryOrder] = useState<string[]>(() =>
+    loadIncomeCategoryOrder(),
+  )
+  const [expenseHiddenPresets, setExpenseHiddenPresets] = useState<string[]>(() =>
+    loadExpenseHiddenPresets(),
+  )
+  const [incomeHiddenPresets, setIncomeHiddenPresets] = useState<string[]>(() =>
+    loadIncomeHiddenPresets(),
   )
   const [currency, setCurrency] = useState<string>(
     () => localStorage.getItem(CURRENCY_KEY) || 'TRY',
@@ -376,6 +396,36 @@ export default function App() {
     }
   }
 
+  function handleSaveCategoryOrder(side: 'expense' | 'income', order: string[]): void {
+    if (side === 'expense') {
+      setExpenseCategoryOrder(order)
+      saveExpenseCategoryOrder(order)
+    } else {
+      setIncomeCategoryOrder(order)
+      saveIncomeCategoryOrder(order)
+    }
+  }
+
+  function handleToggleHidePreset(side: 'expense' | 'income', presetId: string): void {
+    if (side === 'expense') {
+      setExpenseHiddenPresets((prev) => {
+        const next = prev.includes(presetId)
+          ? prev.filter((id) => id !== presetId)
+          : [...prev, presetId]
+        saveExpenseHiddenPresets(next)
+        return next
+      })
+    } else {
+      setIncomeHiddenPresets((prev) => {
+        const next = prev.includes(presetId)
+          ? prev.filter((id) => id !== presetId)
+          : [...prev, presetId]
+        saveIncomeHiddenPresets(next)
+        return next
+      })
+    }
+  }
+
   const mergedExpenseCategories = useMemo(
     () => [
       ...EXPENSE_CATEGORIES,
@@ -476,6 +526,10 @@ export default function App() {
         incomeForMonth={incomeForCurrentMonth}
         customExpenseCategories={customExpenseCategories}
         customIncomeCategories={customIncomeCategories}
+        expenseCategoryOrder={expenseCategoryOrder}
+        incomeCategoryOrder={incomeCategoryOrder}
+        expenseHiddenPresets={expenseHiddenPresets}
+        incomeHiddenPresets={incomeHiddenPresets}
         formatMoney={formatMoney}
         timeFormat={timeFormat}
         onClose={() => setQuickEntryOpen(false)}
@@ -489,6 +543,8 @@ export default function App() {
         onAddCustomCategory={handleAddCustomCategory}
         onUpdateCustomCategory={handleUpdateCustomCategory}
         onDeleteCustomCategory={handleDeleteCustomCategory}
+        onSaveCategoryOrder={handleSaveCategoryOrder}
+        onToggleHidePreset={handleToggleHidePreset}
       />
 
       {installPromptEvent && !installPromptDismissed ? (
