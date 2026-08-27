@@ -28,7 +28,7 @@ import {
   INCOME_CATEGORIES,
   customCategoryToCategory,
 } from './categories'
-import { daysInMonth, parseISODate, startOfToday, toISODate } from './dateUtils'
+import { daysInMonth, parseISODate, toISODate } from './dateUtils'
 import { useNotification } from './hooks/useNotification'
 import type { CustomCategory, Expense, IncomeEntry } from './types'
 
@@ -160,11 +160,6 @@ export default function App() {
   const balanceValue = Math.abs(remainingAmount)
   const selectedDateStatus = (() => {
     const selected = parseISODate(selectedDate)
-    const todayStart = startOfToday()
-    if (selected < todayStart && selectedDateCost <= 0) {
-      return 'didnt input any value'
-    }
-
     const msUntil = selected.getTime() - nowMs
     if (msUntil > 0) {
       const totalSeconds = Math.floor(msUntil / 1000)
@@ -499,6 +494,7 @@ export default function App() {
           onMonthChange={handleMonthChange}
           onSelectDate={setSelectedDate}
           onDoubleTapDate={handleDoubleTapDate}
+          onAddEntry={() => setQuickEntryOpen(true)}
         />
       </main>
 

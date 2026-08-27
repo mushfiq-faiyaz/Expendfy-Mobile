@@ -27,6 +27,7 @@ type Props = {
   onMonthChange: (year: number, monthIndex: number) => void
   onSelectDate: (iso: string) => void
   onDoubleTapDate: (iso: string) => void
+  onAddEntry?: () => void
 }
 
 export function Calendar({
@@ -137,6 +138,8 @@ export function Calendar({
   const colTemplate = `repeat(7, ${cellPx}px)`
   const rowTemplate = `repeat(${rowCount}, ${cellPx}px)`
   const blockWidth = 7 * cellPx + 6 * WEEKDAY_GRID_GAP_PX
+
+  const isEmptyDay = !spendByDate[selectedDate] && selectedDate <= todayDateIso
 
   function shiftMonth(delta: number): void {
     const d = new Date(year, monthIndex + delta, 1)
@@ -267,7 +270,15 @@ export function Calendar({
             )
           })}
         </div>
-        <p className="calendar__status">{statusMessage}</p>
+        {isEmptyDay ? (
+          <p className="calendar__empty-text" style={{ width: blockWidth }}>
+            No entries for this day.
+          </p>
+        ) : statusMessage ? (
+          <p className="calendar__status" style={{ width: blockWidth }}>
+            {statusMessage}
+          </p>
+        ) : null}
       </div>
     </div>
   )

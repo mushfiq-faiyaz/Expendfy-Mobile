@@ -204,8 +204,8 @@ body {
 }
 .app-header__mode-btn--active.app-header__mode-btn--spent,
 .app-header__mode-btn--active:not([data-balance]) {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.24);
 }
 .app-header__mode-btn--active.app-header__mode-btn--remain,
 .app-header__mode-btn--active[data-balance="remain"] {
@@ -539,11 +539,16 @@ body {
   color: #4ade80;
 }
 
-.calendar__status {
-  margin: 6px 6px 0;
-  color: #f87171;
+.calendar__status,
+.calendar__empty-text {
+  margin: 6px auto 0;
+  color: rgba(148, 163, 184, 0.85);
   font-size: 0.82rem;
+  font-weight: 500;
+  text-align: center;
   min-height: 1.2em;
+  padding: 0 4px;
+  box-sizing: border-box;
 }
 
 /* ─── Side Drawer ───────────────────────────────────────────────── */
