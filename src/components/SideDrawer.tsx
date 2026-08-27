@@ -1,3 +1,8 @@
+import { useState } from 'react'
+import { ChevronDown } from 'lucide-react'
+import { getCurrencyInfo } from '../currencies'
+import { CurrencyPicker } from './CurrencyPicker'
+
 type Props = {
   open: boolean
   onClose: () => void
@@ -17,7 +22,12 @@ export function SideDrawer({
   timeFormat,
   onTimeFormatChange,
 }: Props) {
+  const [currencyPickerOpen, setCurrencyPickerOpen] = useState(false)
+
   if (!open) return null
+
+  const activeCurrency = getCurrencyInfo(currency)
+
   return (
     <>
       <button type="button" className="drawer__backdrop" onClick={onClose} aria-label="Close menu" />
@@ -29,21 +39,28 @@ export function SideDrawer({
           </button>
         </div>
         <div className="drawer__currency">
-          <label htmlFor="currency-select" className="drawer__currency-label">
-            Currency
-          </label>
-          <select
-            id="currency-select"
-            className="drawer__currency-select"
-            value={currency}
-            onChange={(e) => onCurrencyChange(e.target.value)}
+          <span className="drawer__currency-label">Currency</span>
+          <button
+            type="button"
+            className="drawer__currency-trigger"
+            onClick={() => setCurrencyPickerOpen(true)}
+            aria-label={`Currency: ${activeCurrency.symbol} ${currency} (${activeCurrency.name})`}
+            aria-haspopup="dialog"
           >
-            {currencyOptions.map((code) => (
-              <option key={code} value={code}>
-                {code}
-              </option>
-            ))}
-          </select>
+            <div className="drawer__currency-trigger-left">
+              <span className="drawer__currency-trigger-symbol">
+                {activeCurrency.symbol}
+              </span>
+              <div className="drawer__currency-trigger-info">
+                <span className="drawer__currency-trigger-code">
+                  <span className="drawer__currency-trigger-symbol-text">{activeCurrency.symbol}</span>{' '}
+                  {currency}
+                </span>
+                <span className="drawer__currency-trigger-name">{activeCurrency.name}</span>
+              </div>
+            </div>
+            <ChevronDown size={16} className="drawer__currency-trigger-chevron" />
+          </button>
         </div>
         <div className="drawer__time-format">
           <span className="drawer__currency-label">Time Format</span>
@@ -82,6 +99,16 @@ export function SideDrawer({
           </p>
         </div>
       </aside>
+
+      <CurrencyPicker
+        open={currencyPickerOpen}
+        currencies={currencyOptions}
+        selected={currency}
+        onSelect={(code) => {
+          onCurrencyChange(code)
+        }}
+        onClose={() => setCurrencyPickerOpen(false)}
+      />
     </>
   )
 }

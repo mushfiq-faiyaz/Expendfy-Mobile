@@ -618,29 +618,101 @@ body {
   color: #60a5fa;
 }
 
-/* Glass card wrapping the currency dropdown — like a settings row */
-.drawer__currency-select {
+/* Glass card trigger for currency picker in Menu */
+.drawer__currency-trigger {
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   border-radius: var(--radius-input);
   border: 1px solid rgba(255, 255, 255, 0.10);
   background: rgba(22, 33, 54, 0.70);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: #f8fafc;
-  padding: 12px 14px;
+  padding: 9px 12px;
   font: inherit;
-  font-weight: 500;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.20);
-  transition: border-color 0.15s, box-shadow 0.15s;
-  /* native select arrow visibility on dark bg */
-  -webkit-appearance: auto;
-  appearance: auto;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+  text-align: left;
 }
 
-.drawer__currency-select:focus {
+.drawer__currency-trigger:hover {
+  background: rgba(30, 44, 70, 0.85);
+  border-color: rgba(96, 165, 250, 0.35);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.drawer__currency-trigger:active {
+  transform: scale(0.98);
+  background: rgba(38, 54, 88, 0.90);
+}
+
+.drawer__currency-trigger:focus-visible {
   outline: none;
   border-color: rgba(96, 165, 250, 0.65);
   box-shadow: var(--blue-glow);
+}
+
+.drawer__currency-trigger-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.drawer__currency-trigger-symbol {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(37, 99, 235, 0.22);
+  border: 1px solid rgba(96, 165, 250, 0.30);
+  color: #60a5fa;
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.drawer__currency-trigger-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.drawer__currency-trigger-code {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: 0.02em;
+}
+
+.drawer__currency-trigger-symbol-text {
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.drawer__currency-trigger-name {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drawer__currency-trigger-chevron {
+  color: #94a3b8;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.drawer__currency-trigger:hover .drawer__currency-trigger-chevron {
+  color: #f1f5f9;
 }
 
 /* ─── Time format pill toggle ──────────────────────────────────── */
@@ -1790,4 +1862,250 @@ body {
   transform: scale(0.97);
   background: rgba(55, 72, 104, 0.80);
 }
+
+/* ─── Currency Picker Bottom Sheet ─────────────────────────────────
+   z-index 80/85 so it sits smoothly above side drawer (z 50)
+   ─────────────────────────────────────────────────────────────── */
+.currency-picker__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(2, 6, 23, 0.70);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: none;
+  cursor: pointer;
+}
+
+.currency-picker {
+  position: fixed;
+  z-index: 85;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 430px;
+  margin: 0 auto;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  background: rgba(11, 18, 38, 0.94);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-bottom: none;
+  padding: 6px 16px 28px;
+  box-shadow:
+    0 -10px 50px rgba(0, 0, 0, 0.60),
+    0 -1px 0 rgba(255, 255, 255, 0.07),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  animation: sheet-up 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: min(80dvh, 620px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.currency-picker__handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.28);
+  margin: 10px auto 14px;
+  flex-shrink: 0;
+}
+
+.currency-picker__title {
+  margin: 0 0 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #f1f5f9;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.currency-picker__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  padding: 2px 2px 14px;
+  -webkit-overflow-scrolling: touch;
+  flex: 1 1 auto;
+}
+
+/* Individual currency card */
+.currency-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(22, 32, 54, 0.60);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.18),
+    0 1px 0 rgba(255, 255, 255, 0.03) inset;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+  transition: background 0.15s, border-color 0.15s, transform 0.12s, box-shadow 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.currency-card:hover {
+  background: rgba(34, 48, 76, 0.75);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.currency-card:active {
+  transform: scale(0.98);
+  background: rgba(42, 60, 94, 0.90);
+}
+
+/* Active / Selected currency card state */
+.currency-card--active {
+  background: rgba(37, 99, 235, 0.18);
+  border-color: rgba(96, 165, 250, 0.45);
+  box-shadow:
+    0 0 16px rgba(59, 130, 246, 0.16),
+    inset 0 0 0 1px rgba(96, 165, 250, 0.22);
+}
+
+.currency-card--active:hover {
+  background: rgba(37, 99, 235, 0.25);
+  border-color: rgba(96, 165, 250, 0.60);
+}
+
+.currency-card__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* Currency symbol badge */
+.currency-card__symbol-badge {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: rgba(30, 42, 64, 0.70);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: #94a3b8;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.currency-card__symbol-badge--active {
+  background: rgba(37, 99, 235, 0.32);
+  border-color: rgba(96, 165, 250, 0.55);
+  color: #93c5fd;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.30);
+}
+
+.currency-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.currency-card__code {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: 0.01em;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.currency-card__symbol-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #60a5fa;
+}
+
+.currency-card__name {
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.currency-card--active .currency-card__name {
+  color: #cbd5e1;
+}
+
+/* Custom radio indicator */
+.currency-card__radio {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.30);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.currency-card__radio--active {
+  border-color: #60a5fa;
+  background: rgba(37, 99, 235, 0.35);
+  box-shadow:
+    0 0 10px rgba(59, 130, 246, 0.45),
+    inset 0 0 0 1px rgba(96, 165, 250, 0.30);
+}
+
+.currency-card__radio-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #60a5fa;
+  box-shadow: 0 0 6px rgba(96, 165, 250, 0.85);
+}
+
+/* Dismiss / Cancel button */
+.currency-picker__dismiss {
+  display: block;
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(30, 42, 64, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #94a3b8;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, transform 0.12s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.currency-picker__dismiss:hover {
+  background: rgba(44, 58, 86, 0.65);
+  color: #cbd5e1;
+}
+
+.currency-picker__dismiss:active {
+  transform: scale(0.98);
+  background: rgba(55, 72, 104, 0.80);
+}
+
 
