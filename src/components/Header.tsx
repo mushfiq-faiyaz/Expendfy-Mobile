@@ -8,10 +8,8 @@ type Props = {
   dayCost: number
   balanceValue: number
   isOverBudget: boolean
-  cellMode: 'day' | 'over'
   viewYear: number
   viewMonth: number
-  onCellModeChange: (mode: 'day' | 'over') => void
   formatMoney: (n: number) => string
   onMenuClick: () => void
 }
@@ -29,10 +27,8 @@ export function Header({
   dayCost,
   balanceValue,
   isOverBudget,
-  cellMode,
   viewYear,
   viewMonth,
-  onCellModeChange,
   formatMoney,
   onMenuClick,
 }: Props) {
@@ -66,35 +62,20 @@ export function Header({
       {/* ── Summary card ── */}
       <div className="app-header__meta">
 
-        {/* LEFT — Today */}
+        {/* LEFT — Selected Date */}
         <div className="app-header__panel app-header__panel--left">
-          <p className="app-header__panel-title">{selectedDateLabel}</p>
+          <div className="app-header__panel-header">
+            <span className="app-header__panel-title">{selectedDateLabel}</span>
+          </div>
 
-          {/* Spent today — tapping switches calendar to day-spend mode */}
-          <button
-            type="button"
-            className={`app-header__mode-btn${
-              cellMode === 'day' ? ' app-header__mode-btn--active app-header__mode-btn--spent' : ''
-            }`}
-            onClick={() => onCellModeChange('day')}
-          >
+          <div className="app-header__stat-row">
             <span className="app-header__label">Spent</span>
             <span className="app-header__value app-header__value--today">
               {formatMoney(dayCost)}
             </span>
-          </button>
+          </div>
 
-          {/* Remain / Over — tapping switches calendar to over-budget mode */}
-          <button
-            type="button"
-            className={`app-header__mode-btn${
-              cellMode === 'over'
-                ? ` app-header__mode-btn--active app-header__mode-btn--${isOverBudget ? 'over' : 'remain'}`
-                : ''
-            }`}
-            data-balance={isOverBudget ? 'over' : 'remain'}
-            onClick={() => onCellModeChange('over')}
-          >
+          <div className="app-header__stat-row">
             <span className="app-header__label">
               <span className="app-header__label--over">Over</span> / <span className="app-header__label--remain">Remain</span>
             </span>
@@ -105,7 +86,7 @@ export function Header({
             >
               {formatMoney(balanceValue)}
             </span>
-          </button>
+          </div>
 
           {/* Average */}
           <div className="app-header__stat-row app-header__stat-row--avg">

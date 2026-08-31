@@ -1,4 +1,5 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Check, SlidersHorizontal } from 'lucide-react'
 import {
   daysInMonth,
   formatCompactAmount,
@@ -14,13 +15,16 @@ const GRID_GAP_PX = 2
 const WEEKDAY_GRID_GAP_PX = 2
 const BLOCK_GAP_PX = 4
 
+export type CalendarDisplayMode = 'both' | 'spent' | 'remain'
+
+const CALENDAR_DISPLAY_MODE_KEY = 'expendfy_calendar_display_mode'
+
 type Props = {
   year: number
   monthIndex: number
   spendByDate: Record<string, number>
   incomeDates?: Set<string>
   averageExpense: number
-  cellMode: 'day' | 'over'
   selectedDate: string
   statusMessage: string
   formatMoney: (n: number) => string
@@ -36,7 +40,6 @@ export function Calendar({
   spendByDate,
   incomeDates,
   averageExpense,
-  cellMode,
   selectedDate,
   statusMessage,
   formatMoney,
@@ -46,8 +49,38 @@ export function Calendar({
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null)
   const weekdayRowRef = useRef<HTMLDivElement>(null)
+  const menuContainerRef = useRef<HTMLDivElement>(null)
   const lastTapRef = useRef<{ iso: string; ts: number } | null>(null)
   const [cellPx, setCellPx] = useState(48)
+  const [showDisplayMenu, setShowDisplayMenu] = useState(false)
+  const [displayMode, setDisplayMode] = useState<CalendarDisplayMode>(() => {
+    const saved = localStorage.getItem(CALENDAR_DISPLAY_MODE_KEY)
+    if (saved === 'both' || saved === 'spent' || saved === 'remain') {
+      return saved
+    }
+    return 'both'
+  })
+
+  function handleSetDisplayMode(mode: CalendarDisplayMode): void {
+    setDisplayMode(mode)
+    localStorage.setItem(CALENDAR_DISPLAY_MODE_KEY, mode)
+    setShowDisplayMenu(false)
+  }
+
+  useEffect(() => {
+    if (!showDisplayMenu) return
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      if (menuContainerRef.current && !menuContainerRef.current.contains(e.target as Node)) {
+        setShowDisplayMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
+    }
+  }, [showDisplayMenu])
 
   const maxMonthSpend = useMemo(
     () => Math.max(...Object.values(spendByDate), 0),
@@ -112,7 +145,6 @@ export function Calendar({
   useLayoutEffect(() => {
     const host = hostRef.current
     if (!host) return
-
     const measure = (): void => {
       const W = host.clientWidth
       const H = host.clientHeight
@@ -170,7 +202,49 @@ export function Calendar({
         >
           ‹
         </button>
-        <span className="calendar__month">{monthYearLabel(year, monthIndex)}</span>
+        <div className="calendar__header-center" ref={menuContainerRef}>
+          <span className="calendar__month">{monthYearLabel(year, monthIndex)}</span>
+          <button
+            type="button"
+            className={`calendar__display-btn ${showDisplayMenu ? 'calendar__display-btn--active' : ''}`}
+            onClick={() => setShowDisplayMenu((prev) => !prev)}
+            aria-label="Calendar display options"
+            title="Display options"
+            aria-expanded={showDisplayMenu}
+          >
+            <SlidersHorizontal size={14} />
+          </button>
+
+          {showDisplayMenu && (
+            <div className="calendar__display-dropdown">
+              <div className="calendar__dropdown-title">Display Options</div>
+              <button
+                type="button"
+                className={`calendar__dropdown-item ${displayMode === 'both' ? 'calendar__dropdown-item--active' : ''}`}
+                onClick={() => handleSetDisplayMode('both')}
+              >
+                <span>Show both</span>
+                {displayMode === 'both' && <Check size={14} className="calendar__dropdown-check" />}
+              </button>
+              <button
+                type="button"
+                className={`calendar__dropdown-item ${displayMode === 'spent' ? 'calendar__dropdown-item--active' : ''}`}
+                onClick={() => handleSetDisplayMode('spent')}
+              >
+                <span>Spent only</span>
+                {displayMode === 'spent' && <Check size={14} className="calendar__dropdown-check" />}
+              </button>
+              <button
+                type="button"
+                className={`calendar__dropdown-item ${displayMode === 'remain' ? 'calendar__dropdown-item--active' : ''}`}
+                onClick={() => handleSetDisplayMode('remain')}
+              >
+                <span>Remain only</span>
+                {displayMode === 'remain' && <Check size={14} className="calendar__dropdown-check" />}
+              </button>
+            </div>
+          )}
+        </div>
         <button
           type="button"
           className="calendar__nav-btn"
@@ -209,14 +283,11 @@ export function Calendar({
           {cells.map((cell) => {
             const { iso, day, inCurrentMonth } = cell
             const spent = spendByDate[iso] ?? 0
-            const diff = spent - averageExpense
             const hasInput = spent > 0
-            const cellValue =
-              cellMode === 'day' ? spent : hasInput ? Math.abs(diff) : 0
+            const diff = spent - averageExpense // > 0 = over budget, <= 0 = remain under budget
             const isToday = todayIso === iso
             const isSelected = selectedDate === iso
-            const isOverCell = cellMode === 'over' && hasInput && diff > 0
-            const isRemainCell = cellMode === 'over' && hasInput && diff < 0
+            const isOver = diff > 0
             const hasIncome = inCurrentMonth && (incomeDates?.has(iso) ?? false)
             const isHighestSpend =
               inCurrentMonth && iso === highestExpenseIso && (spendByDate[iso] ?? 0) > 0
@@ -227,8 +298,15 @@ export function Calendar({
                 ? Math.min(1, Math.max(0.12, spent / maxMonthSpend))
                 : 0
 
-            const formattedDisplay =
-              cellValue > 0 ? formatCompactAmount(cellValue, formatMoney) : ''
+            const spentDisplay = hasInput ? formatCompactAmount(spent, formatMoney) : ''
+            const remainDisplay = hasInput
+              ? isOver
+                ? `-${formatCompactAmount(diff, formatMoney)}`
+                : `+${formatCompactAmount(Math.abs(diff), formatMoney)}`
+              : ''
+
+            const showSpent = hasInput && (displayMode === 'both' || displayMode === 'spent')
+            const showRemain = hasInput && (displayMode === 'both' || displayMode === 'remain')
 
             return (
               <button
@@ -253,19 +331,27 @@ export function Calendar({
                 onClick={(e) => handleCellTap(iso, e.timeStamp)}
               >
                 <span className="calendar__day-num">{day}</span>
-                {cellValue > 0 ? (
-                  <span
-                    className={[
-                      'calendar__day-spend',
-                      isOverCell && 'calendar__day-spend--over',
-                      isRemainCell && 'calendar__day-spend--remain',
-                    ]
-                      .filter(Boolean)
-                      .join(' ')}
-                  >
-                    {formattedDisplay}
-                  </span>
-                ) : null}
+                {hasInput && (showSpent || showRemain) && (
+                  <div className="calendar__cell-amounts">
+                    {showSpent && (
+                      <span className="calendar__day-amount calendar__day-amount--spent">
+                        {spentDisplay}
+                      </span>
+                    )}
+                    {showRemain && (
+                      <span
+                        className={[
+                          'calendar__day-amount',
+                          isOver ? 'calendar__day-amount--over' : 'calendar__day-amount--remain',
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                      >
+                        {remainDisplay}
+                      </span>
+                    )}
+                  </div>
+                )}
               </button>
             )
           })}

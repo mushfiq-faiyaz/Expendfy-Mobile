@@ -127,7 +127,6 @@ export default function App() {
   const [quickEntryOpen, setQuickEntryOpen] = useState(true)
   const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null)
   const [installPromptDismissed, setInstallPromptDismissed] = useState(false)
-  const [cellMode, setCellMode] = useState<'day' | 'over'>('day')
   const [nowMs, setNowMs] = useState(() => Date.now())
 
   const monthlySpent = useMemo(
@@ -472,10 +471,8 @@ export default function App() {
         dayCost={selectedDateCost}
         balanceValue={balanceValue}
         isOverBudget={isOverBudget}
-        cellMode={cellMode}
         viewYear={viewYear}
         viewMonth={viewMonth}
-        onCellModeChange={setCellMode}
         formatMoney={formatMoney}
         onMenuClick={() => setDrawerOpen(true)}
       />
@@ -487,7 +484,6 @@ export default function App() {
           spendByDate={spendByDate}
           incomeDates={incomeDates}
           averageExpense={averageExpense}
-          cellMode={cellMode}
           selectedDate={selectedDate}
           statusMessage={selectedDateStatus}
           formatMoney={formatMoney}
