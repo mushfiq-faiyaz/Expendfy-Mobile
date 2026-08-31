@@ -152,9 +152,10 @@ export function Calendar({
         20,
         weekdayRowRef.current?.getBoundingClientRect().height ?? 22,
       )
+      const reservedFooterH = 34
       const reservedAboveGrid = weekdayH + BLOCK_GAP_PX
       const maxCellW = (W - 6 * GRID_GAP_PX) / 7
-      const maxCellH = (H - reservedAboveGrid - (rowCount - 1) * GRID_GAP_PX) / rowCount
+      const maxCellH = (H - reservedAboveGrid - reservedFooterH - (rowCount - 1) * GRID_GAP_PX) / rowCount
       const s = Math.floor(Math.min(maxCellW, maxCellH))
       setCellPx(Number.isFinite(s) ? Math.max(26, s) : 48)
     }
@@ -356,15 +357,17 @@ export function Calendar({
             )
           })}
         </div>
-        {isEmptyDay ? (
-          <p className="calendar__empty-text" style={{ width: blockWidth }}>
-            No entries for this day.
-          </p>
-        ) : statusMessage ? (
-          <p className="calendar__status" style={{ width: blockWidth }}>
-            {statusMessage}
-          </p>
-        ) : null}
+        <div className="calendar__footer" style={{ width: blockWidth }}>
+          {isEmptyDay ? (
+            <p className="calendar__empty-text">
+              No entries for this day.
+            </p>
+          ) : statusMessage ? (
+            <p className="calendar__status">
+              {statusMessage}
+            </p>
+          ) : null}
+        </div>
       </div>
     </div>
   )

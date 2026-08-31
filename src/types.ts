@@ -30,3 +30,24 @@ export type CustomCategory = {
   icon: string
   color: string
 }
+
+export type EntrySnapshot = {
+  id: string
+  amount: number
+  category?: string
+  description?: string
+  rawDescription?: string
+  createdAt: string
+  date?: string
+}
+
+export type ActivityLogItem = {
+  id: string
+  type: 'added' | 'edited' | 'deleted'
+  side: 'expense' | 'income'
+  entryId: string
+  timestamp: string
+  entrySnapshotBefore: EntrySnapshot
+  entrySnapshotAfter?: EntrySnapshot
+  editHistory?: EditHistoryItem[]
+}

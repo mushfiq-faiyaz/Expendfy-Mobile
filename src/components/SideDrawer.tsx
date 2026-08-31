@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, History } from 'lucide-react'
 import { getCurrencyInfo } from '../currencies'
 import { CurrencyPicker } from './CurrencyPicker'
 
 type Props = {
   open: boolean
   onClose: () => void
+  onOpenActivity?: () => void
   currency: string
   currencyOptions: string[]
   onCurrencyChange: (currency: string) => void
@@ -16,6 +17,7 @@ type Props = {
 export function SideDrawer({
   open,
   onClose,
+  onOpenActivity,
   currency,
   currencyOptions,
   onCurrencyChange,
@@ -38,6 +40,27 @@ export function SideDrawer({
             ×
           </button>
         </div>
+
+        <div className="drawer__activity">
+          <span className="drawer__currency-label">Activity</span>
+          <button
+            type="button"
+            className="drawer__activity-btn"
+            onClick={() => {
+              onClose()
+              onOpenActivity?.()
+            }}
+          >
+            <div className="drawer__activity-btn-left">
+              <span className="drawer__activity-icon">
+                <History size={17} strokeWidth={2.2} />
+              </span>
+              <span className="drawer__activity-label">Monthly Activity</span>
+            </div>
+            <span className="drawer__activity-badge">View log</span>
+          </button>
+        </div>
+
         <div className="drawer__currency">
           <span className="drawer__currency-label">Currency</span>
           <button

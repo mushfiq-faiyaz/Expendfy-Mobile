@@ -1,7 +1,8 @@
-import type { CustomCategory, Expense, IncomeEntry } from './types'
+import type { ActivityLogItem, CustomCategory, Expense, IncomeEntry } from './types'
 
 const EXPENSES_KEY = 'expendfy_expenses'
 const INCOME_KEY = 'expendfy_income'
+const ACTIVITY_LOG_KEY = 'expendfy_activity_log'
 const CUSTOM_EXPENSE_CATEGORIES_KEY = 'expendfy_custom_expense_categories'
 const CUSTOM_INCOME_CATEGORIES_KEY = 'expendfy_custom_income_categories'
 const EXPENSE_CATEGORY_ORDER_KEY = 'expendfy_expense_category_order'
@@ -127,6 +128,21 @@ export function loadIncomeHiddenPresets(): string[] {
 
 export function saveIncomeHiddenPresets(hidden: string[]): void {
   localStorage.setItem(INCOME_HIDDEN_PRESETS_KEY, JSON.stringify(hidden))
+}
+
+export function loadActivityLog(): ActivityLogItem[] {
+  try {
+    const raw = localStorage.getItem(ACTIVITY_LOG_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as unknown
+    return Array.isArray(parsed) ? (parsed as ActivityLogItem[]) : []
+  } catch {
+    return []
+  }
+}
+
+export function saveActivityLog(log: ActivityLogItem[]): void {
+  localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(log))
 }
 
 

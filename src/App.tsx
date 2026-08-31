@@ -5,6 +5,8 @@ import { Header } from './components/Header'
 import { IncomeSheet } from './components/IncomeSheet'
 import { QuickEntryModal } from './components/QuickEntryModal'
 import { SideDrawer } from './components/SideDrawer'
+import { ActivitySheet } from './components/ActivitySheet'
+import { EditHistoryModal } from './components/EditHistoryModal'
 import {
   loadCustomExpenseCategories,
   loadCustomIncomeCategories,
@@ -22,6 +24,8 @@ import {
   saveExpenseHiddenPresets,
   loadIncomeHiddenPresets,
   saveIncomeHiddenPresets,
+  loadActivityLog,
+  saveActivityLog,
 } from './storage'
 import {
   EXPENSE_CATEGORIES,
@@ -31,7 +35,7 @@ import {
 } from './categories'
 import { daysInMonth, parseISODate, toISODate } from './dateUtils'
 import { useNotification } from './hooks/useNotification'
-import type { CustomCategory, EditHistoryItem, Expense, IncomeEntry } from './types'
+import type { ActivityLogItem, CustomCategory, EditHistoryItem, EntrySnapshot, Expense, IncomeEntry } from './types'
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
@@ -110,6 +114,136 @@ export default function App() {
   const [incomeHiddenPresets, setIncomeHiddenPresets] = useState<string[]>(() =>
     loadIncomeHiddenPresets(),
   )
+  const [activityLog, setActivityLog] = useState<ActivityLogItem[]>(() => {
+    const loadedLog = loadActivityLog()
+    const loadedExpenses = loadExpenses()
+    const loadedIncome = loadIncome()
+    const loadedCustomExpenses = loadCustomExpenseCategories()
+    const loadedCustomIncome = loadCustomIncomeCategories()
+    const allExpenseCats = [
+      ...EXPENSE_CATEGORIES,
+      ...loadedCustomExpenses.map(customCategoryToCategory),
+    ]
+    const allIncomeCats = [
+      ...INCOME_CATEGORIES,
+      ...loadedCustomIncome.map(customCategoryToCategory),
+    ]
+    const loggedEntryIds = new Set(
+      loadedLog.filter((l) => l.type === 'added').map((l) => l.entryId),
+    )
+    const missing: ActivityLogItem[] = []
+
+    for (const e of loadedExpenses) {
+      if (!loggedEntryIds.has(e.id)) {
+        const parsed = parseEntryCategory(e.description, allExpenseCats)
+        missing.push({
+          id: `backfill-${e.id}`,
+          type: 'added',
+          side: 'expense',
+          entryId: e.id,
+          timestamp: e.createdAt,
+          entrySnapshotBefore: {
+            id: e.id,
+            amount: e.amount,
+            category: parsed.category?.label || '',
+            description: parsed.note || (parsed.category ? '' : e.description),
+            rawDescription: e.description,
+            createdAt: e.createdAt,
+            date: e.date,
+          },
+        })
+        if (e.editHistory && e.editHistory.length > 0) {
+          for (let i = 0; i < e.editHistory.length; i++) {
+            const hist = e.editHistory[i]
+            missing.push({
+              id: `backfill-edit-${e.id}-${i}`,
+              type: 'edited',
+              side: 'expense',
+              entryId: e.id,
+              timestamp: hist.editedAt,
+              entrySnapshotBefore: {
+                id: e.id,
+                amount: hist.amount,
+                category: hist.category,
+                description: hist.description,
+                rawDescription: hist.description,
+                createdAt: e.createdAt,
+                date: e.date,
+              },
+              entrySnapshotAfter: {
+                id: e.id,
+                amount: e.amount,
+                category: parsed.category?.label || '',
+                description: parsed.note || (parsed.category ? '' : e.description),
+                rawDescription: e.description,
+                createdAt: e.createdAt,
+                date: e.date,
+              },
+              editHistory: e.editHistory.slice(0, i + 1),
+            })
+          }
+        }
+      }
+    }
+
+    for (const inc of loadedIncome) {
+      if (!loggedEntryIds.has(inc.id)) {
+        const parsed = parseEntryCategory(inc.description, allIncomeCats)
+        missing.push({
+          id: `backfill-${inc.id}`,
+          type: 'added',
+          side: 'income',
+          entryId: inc.id,
+          timestamp: inc.createdAt,
+          entrySnapshotBefore: {
+            id: inc.id,
+            amount: inc.amount,
+            category: parsed.category?.label || '',
+            description: parsed.note || (parsed.category ? '' : inc.description),
+            rawDescription: inc.description,
+            createdAt: inc.createdAt,
+          },
+        })
+        if (inc.editHistory && inc.editHistory.length > 0) {
+          for (let i = 0; i < inc.editHistory.length; i++) {
+            const hist = inc.editHistory[i]
+            missing.push({
+              id: `backfill-edit-${inc.id}-${i}`,
+              type: 'edited',
+              side: 'income',
+              entryId: inc.id,
+              timestamp: hist.editedAt,
+              entrySnapshotBefore: {
+                id: inc.id,
+                amount: hist.amount,
+                category: hist.category,
+                description: hist.description,
+                rawDescription: hist.description,
+                createdAt: inc.createdAt,
+              },
+              entrySnapshotAfter: {
+                id: inc.id,
+                amount: inc.amount,
+                category: parsed.category?.label || '',
+                description: parsed.note || (parsed.category ? '' : inc.description),
+                rawDescription: inc.description,
+                createdAt: inc.createdAt,
+              },
+              editHistory: inc.editHistory.slice(0, i + 1),
+            })
+          }
+        }
+      }
+    }
+
+    if (missing.length === 0) return loadedLog
+
+    const merged = [...loadedLog, ...missing].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    )
+    saveActivityLog(merged)
+    return merged
+  })
   const [currency, setCurrency] = useState<string>(
     () => localStorage.getItem(CURRENCY_KEY) || 'TRY',
   )
@@ -123,6 +257,11 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState(() => todayIso)
 
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [monthActivityOpen, setMonthActivityOpen] = useState(false)
+  const [monthViewingHistory, setMonthViewingHistory] = useState<{
+    entry: Expense | IncomeEntry
+    side: 'expense' | 'income'
+  } | null>(null)
   const [expenseSheetOpen, setExpenseSheetOpen] = useState(false)
   const [incomeSheetOpen, setIncomeSheetOpen] = useState(false)
   const [quickEntryOpen, setQuickEntryOpen] = useState(true)
@@ -216,6 +355,13 @@ export default function App() {
     return set
   }, [incomeEntries])
 
+  const monthActivityLog = useMemo(() => {
+    return activityLog.filter((item) => {
+      const d = new Date(item.timestamp)
+      return d.getFullYear() === viewYear && d.getMonth() === viewMonth
+    })
+  }, [activityLog, viewYear, viewMonth])
+
   function handleMonthChange(y: number, m: number): void {
     setViewYear(y)
     setViewMonth(m)
@@ -273,15 +419,48 @@ export default function App() {
   }
 
   function addExpense(description: string, amount: number): void {
+    const normalized = description.trim()
+    const nowIso = new Date().toISOString()
+    const allExpenseCats = [
+      ...EXPENSE_CATEGORIES,
+      ...customExpenseCategories.map(customCategoryToCategory),
+    ]
+    const finalDesc = normalized || nextAutoLabel(expenses.map((e) => e.description), 'Expense')
+    const parsed = parseEntryCategory(finalDesc, allExpenseCats)
+    const newEntryId = newId()
+
+    const snapshot: EntrySnapshot = {
+      id: newEntryId,
+      amount,
+      category: parsed.category?.label || '',
+      description: parsed.note || (parsed.category ? '' : finalDesc),
+      rawDescription: finalDesc,
+      createdAt: nowIso,
+      date: selectedDate,
+    }
+
+    const logItem: ActivityLogItem = {
+      id: newId(),
+      type: 'added',
+      side: 'expense',
+      entryId: newEntryId,
+      timestamp: nowIso,
+      entrySnapshotBefore: snapshot,
+    }
+
+    setActivityLog((prev) => {
+      const next = [logItem, ...prev]
+      saveActivityLog(next)
+      return next
+    })
+
     setExpenses((prev) => {
-      const normalized = description.trim()
       const row: Expense = {
-        id: newId(),
+        id: newEntryId,
         date: selectedDate,
-        description:
-          normalized || nextAutoLabel(prev.map((e) => e.description), 'Expense'),
+        description: finalDesc,
         amount,
-        createdAt: new Date().toISOString(),
+        createdAt: nowIso,
       }
       const next = [...prev, row]
       saveExpenses(next)
@@ -290,13 +469,63 @@ export default function App() {
   }
 
   function updateExpense(id: string, description: string, amount: number): void {
+    const normalized = description.trim()
+    const nowIso = new Date().toISOString()
+    const allExpenseCats = [
+      ...EXPENSE_CATEGORIES,
+      ...customExpenseCategories.map(customCategoryToCategory),
+    ]
+
+    const item = expenses.find((e) => e.id === id)
+    if (item) {
+      const parsedBefore = parseEntryCategory(item.description, allExpenseCats)
+      const finalDesc = normalized || item.description
+      const parsedAfter = parseEntryCategory(finalDesc, allExpenseCats)
+      const historyItem: EditHistoryItem = {
+        amount: item.amount,
+        category: parsedBefore.category?.label || '',
+        description: parsedBefore.note || (parsedBefore.category ? '' : item.description),
+        editedAt: nowIso,
+      }
+      const existingHistory = item.editHistory || []
+      const newHistory = [...existingHistory, historyItem]
+
+      const snapshotBefore: EntrySnapshot = {
+        id: item.id,
+        amount: item.amount,
+        category: parsedBefore.category?.label || '',
+        description: parsedBefore.note || (parsedBefore.category ? '' : item.description),
+        rawDescription: item.description,
+        createdAt: item.createdAt,
+        date: item.date,
+      }
+      const snapshotAfter: EntrySnapshot = {
+        id: item.id,
+        amount,
+        category: parsedAfter.category?.label || '',
+        description: parsedAfter.note || (parsedAfter.category ? '' : finalDesc),
+        rawDescription: finalDesc,
+        createdAt: item.createdAt,
+        date: item.date,
+      }
+      const logItem: ActivityLogItem = {
+        id: newId(),
+        type: 'edited',
+        side: 'expense',
+        entryId: id,
+        timestamp: nowIso,
+        entrySnapshotBefore: snapshotBefore,
+        entrySnapshotAfter: snapshotAfter,
+        editHistory: newHistory,
+      }
+      setActivityLog((prev) => {
+        const next = [logItem, ...prev]
+        saveActivityLog(next)
+        return next
+      })
+    }
+
     setExpenses((prev) => {
-      const normalized = description.trim()
-      const nowIso = new Date().toISOString()
-      const allExpenseCats = [
-        ...EXPENSE_CATEGORIES,
-        ...customExpenseCategories.map(customCategoryToCategory),
-      ]
       const next = prev.map((e) => {
         if (e.id !== id) return e
         const parsed = parseEntryCategory(e.description, allExpenseCats)
@@ -321,6 +550,37 @@ export default function App() {
   }
 
   function deleteExpense(id: string): void {
+    const item = expenses.find((e) => e.id === id)
+    if (item) {
+      const allExpenseCats = [
+        ...EXPENSE_CATEGORIES,
+        ...customExpenseCategories.map(customCategoryToCategory),
+      ]
+      const parsed = parseEntryCategory(item.description, allExpenseCats)
+      const nowIso = new Date().toISOString()
+      const snapshot: EntrySnapshot = {
+        id: item.id,
+        amount: item.amount,
+        category: parsed.category?.label || '',
+        description: parsed.note || (parsed.category ? '' : item.description),
+        rawDescription: item.description,
+        createdAt: item.createdAt,
+        date: item.date,
+      }
+      const logItem: ActivityLogItem = {
+        id: newId(),
+        type: 'deleted',
+        side: 'expense',
+        entryId: id,
+        timestamp: nowIso,
+        entrySnapshotBefore: snapshot,
+      }
+      setActivityLog((prev) => {
+        const next = [logItem, ...prev]
+        saveActivityLog(next)
+        return next
+      })
+    }
     setExpenses((prev) => {
       const next = prev.filter((e) => e.id !== id)
       saveExpenses(next)
@@ -329,14 +589,46 @@ export default function App() {
   }
 
   function addIncome(description: string, amount: number): void {
+    const normalized = description.trim()
+    const nowIso = new Date().toISOString()
+    const allIncomeCats = [
+      ...INCOME_CATEGORIES,
+      ...customIncomeCategories.map(customCategoryToCategory),
+    ]
+    const finalDesc = normalized || nextAutoLabel(incomeEntries.map((e) => e.description), 'Income')
+    const parsed = parseEntryCategory(finalDesc, allIncomeCats)
+    const newEntryId = newId()
+
+    const snapshot: EntrySnapshot = {
+      id: newEntryId,
+      amount,
+      category: parsed.category?.label || '',
+      description: parsed.note || (parsed.category ? '' : finalDesc),
+      rawDescription: finalDesc,
+      createdAt: nowIso,
+    }
+
+    const logItem: ActivityLogItem = {
+      id: newId(),
+      type: 'added',
+      side: 'income',
+      entryId: newEntryId,
+      timestamp: nowIso,
+      entrySnapshotBefore: snapshot,
+    }
+
+    setActivityLog((prev) => {
+      const next = [logItem, ...prev]
+      saveActivityLog(next)
+      return next
+    })
+
     setIncomeEntries((prev) => {
-      const normalized = description.trim()
       const row: IncomeEntry = {
-        id: newId(),
+        id: newEntryId,
         amount,
-        description:
-          normalized || nextAutoLabel(prev.map((e) => e.description), 'Income'),
-        createdAt: new Date().toISOString(),
+        description: finalDesc,
+        createdAt: nowIso,
       }
       const next = [...prev, row]
       saveIncome(next)
@@ -345,13 +637,61 @@ export default function App() {
   }
 
   function updateIncome(id: string, description: string, amount: number): void {
+    const normalized = description.trim()
+    const nowIso = new Date().toISOString()
+    const allIncomeCats = [
+      ...INCOME_CATEGORIES,
+      ...customIncomeCategories.map(customCategoryToCategory),
+    ]
+
+    const item = incomeEntries.find((e) => e.id === id)
+    if (item) {
+      const parsedBefore = parseEntryCategory(item.description, allIncomeCats)
+      const finalDesc = normalized || item.description
+      const parsedAfter = parseEntryCategory(finalDesc, allIncomeCats)
+      const historyItem: EditHistoryItem = {
+        amount: item.amount,
+        category: parsedBefore.category?.label || '',
+        description: parsedBefore.note || (parsedBefore.category ? '' : item.description),
+        editedAt: nowIso,
+      }
+      const existingHistory = item.editHistory || []
+      const newHistory = [...existingHistory, historyItem]
+
+      const snapshotBefore: EntrySnapshot = {
+        id: item.id,
+        amount: item.amount,
+        category: parsedBefore.category?.label || '',
+        description: parsedBefore.note || (parsedBefore.category ? '' : item.description),
+        rawDescription: item.description,
+        createdAt: item.createdAt,
+      }
+      const snapshotAfter: EntrySnapshot = {
+        id: item.id,
+        amount,
+        category: parsedAfter.category?.label || '',
+        description: parsedAfter.note || (parsedAfter.category ? '' : finalDesc),
+        rawDescription: finalDesc,
+        createdAt: item.createdAt,
+      }
+      const logItem: ActivityLogItem = {
+        id: newId(),
+        type: 'edited',
+        side: 'income',
+        entryId: id,
+        timestamp: nowIso,
+        entrySnapshotBefore: snapshotBefore,
+        entrySnapshotAfter: snapshotAfter,
+        editHistory: newHistory,
+      }
+      setActivityLog((prev) => {
+        const next = [logItem, ...prev]
+        saveActivityLog(next)
+        return next
+      })
+    }
+
     setIncomeEntries((prev) => {
-      const normalized = description.trim()
-      const nowIso = new Date().toISOString()
-      const allIncomeCats = [
-        ...INCOME_CATEGORIES,
-        ...customIncomeCategories.map(customCategoryToCategory),
-      ]
       const next = prev.map((e) => {
         if (e.id !== id) return e
         const parsed = parseEntryCategory(e.description, allIncomeCats)
@@ -376,6 +716,36 @@ export default function App() {
   }
 
   function deleteIncome(id: string): void {
+    const item = incomeEntries.find((e) => e.id === id)
+    if (item) {
+      const allIncomeCats = [
+        ...INCOME_CATEGORIES,
+        ...customIncomeCategories.map(customCategoryToCategory),
+      ]
+      const parsed = parseEntryCategory(item.description, allIncomeCats)
+      const nowIso = new Date().toISOString()
+      const snapshot: EntrySnapshot = {
+        id: item.id,
+        amount: item.amount,
+        category: parsed.category?.label || '',
+        description: parsed.note || (parsed.category ? '' : item.description),
+        rawDescription: item.description,
+        createdAt: item.createdAt,
+      }
+      const logItem: ActivityLogItem = {
+        id: newId(),
+        type: 'deleted',
+        side: 'income',
+        entryId: id,
+        timestamp: nowIso,
+        entrySnapshotBefore: snapshot,
+      }
+      setActivityLog((prev) => {
+        const next = [logItem, ...prev]
+        saveActivityLog(next)
+        return next
+      })
+    }
     setIncomeEntries((prev) => {
       const next = prev.filter((e) => e.id !== id)
       saveIncome(next)
@@ -538,12 +908,42 @@ export default function App() {
       <SideDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
+        onOpenActivity={() => setMonthActivityOpen(true)}
         currency={currency}
         currencyOptions={[...CURRENCY_OPTIONS]}
         onCurrencyChange={handleCurrencyChange}
         timeFormat={timeFormat}
         onTimeFormatChange={handleTimeFormatChange}
       />
+
+      <ActivitySheet
+        open={monthActivityOpen}
+        title="Monthly Activity"
+        activityLog={monthActivityLog}
+        expenseCategories={mergedExpenseCategories}
+        incomeCategories={mergedIncomeCategories}
+        formatMoney={formatMoney}
+        timeFormat={timeFormat}
+        onClose={() => setMonthActivityOpen(false)}
+        onOpenEditHistory={(entry, side) => {
+          setMonthViewingHistory({ entry, side })
+        }}
+      />
+
+      {monthViewingHistory && (
+        <EditHistoryModal
+          entry={monthViewingHistory.entry}
+          side={monthViewingHistory.side}
+          categories={
+            monthViewingHistory.side === 'expense'
+              ? mergedExpenseCategories
+              : mergedIncomeCategories
+          }
+          formatMoney={formatMoney}
+          timeFormat={timeFormat}
+          onClose={() => setMonthViewingHistory(null)}
+        />
+      )}
 
       <ExpenseSheet
         key={expenseSheetOpen ? selectedDate : 'expense-sheet'}
@@ -582,6 +982,7 @@ export default function App() {
         currencyOptions={CURRENCY_OPTIONS}
         expensesForDate={expensesForSelectedDate}
         incomeForMonth={incomeForCurrentMonth}
+        activityLog={activityLog}
         customExpenseCategories={customExpenseCategories}
         customIncomeCategories={customIncomeCategories}
         expenseCategoryOrder={expenseCategoryOrder}
