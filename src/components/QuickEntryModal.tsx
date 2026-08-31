@@ -1082,13 +1082,28 @@ export function QuickEntryModal({
     [customIncomeCategories],
   )
 
-  const todaysActivityLog = useMemo(() => {
-    const todayStr = toISODate(new Date())
+  const selectedDateActivityLog = useMemo(() => {
     return activityLog.filter((item) => {
-      const itemDate = toISODate(new Date(item.timestamp))
-      return itemDate === todayStr || (dateIso && itemDate === dateIso)
+      const itemActionDate = toISODate(new Date(item.timestamp))
+      const entryExpenseDate = item.entrySnapshotBefore?.date || item.entrySnapshotAfter?.date
+      const entryCreatedDate = item.entrySnapshotBefore?.createdAt
+        ? toISODate(new Date(item.entrySnapshotBefore.createdAt))
+        : null
+      return (
+        itemActionDate === dateIso ||
+        entryExpenseDate === dateIso ||
+        entryCreatedDate === dateIso
+      )
     })
   }, [activityLog, dateIso])
+
+  const activitySheetTitle = useMemo(() => {
+    const todayStr = toISODate(new Date())
+    if (dateIso === todayStr) {
+      return "Today's Activity"
+    }
+    return `${formatDisplayDate(dateIso)} Activity`
+  }, [dateIso])
 
   if (!open) return null
 
@@ -1826,11 +1841,11 @@ export function QuickEntryModal({
         />
       )}
 
-      {/* ── Activity Sheet (Today's Activity) ── */}
+      {/* ── Activity Sheet (Selected Date Activity) ── */}
       <ActivitySheet
         open={activitySheetOpen}
-        title="Today's Activity"
-        activityLog={todaysActivityLog}
+        title={activitySheetTitle}
+        activityLog={selectedDateActivityLog}
         expenseCategories={mergedExpenseCategories}
         incomeCategories={mergedIncomeCategories}
         formatMoney={formatMoney}
