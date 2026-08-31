@@ -19,13 +19,14 @@ import {
   rectSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ChevronDown, Minus, Pencil, Plus, Redo2, RotateCcw, Trash2, TriangleAlert, Undo2, X } from 'lucide-react'
-import { canEditIncome, formatDisplayDate, toISODate } from '../dateUtils'
+import { ChevronDown, Minus, Pencil, Plus, Redo2, RotateCcw, Tag, Trash2, TriangleAlert, Undo2, X } from 'lucide-react'
+import { formatDisplayDate, isWithin24Hours, toISODate } from '../dateUtils'
 import type { CustomCategory, Expense, IncomeEntry } from '../types'
 import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
   customCategoryToCategory,
+  parseEntryCategory,
   type Category,
 } from '../categories'
 import { TransactionCategoryDisplay } from './TransactionCategoryDisplay'
@@ -938,6 +939,182 @@ function CategoryPicker({
   )
 }
 
+// ── Redesigned category selector row in edit mode ──
+function EditCategorySelectorRow({
+  category,
+  onOpenPicker,
+}: {
+  category: Category | null
+  onOpenPicker: () => void
+}) {
+  return (
+    <button
+      type="button"
+      className="qm-edit__cat-row"
+      onClick={onOpenPicker}
+      aria-label="Change category"
+    >
+      <div className="qm-edit__cat-main">
+        {category ? (
+          <span
+            className="cat-picker__icon"
+            style={{
+              background: category.bg,
+              border: `1px solid ${category.border}`,
+              color: category.color,
+              width: 24,
+              height: 24,
+            }}
+          >
+            <category.Icon size={13} strokeWidth={2.2} />
+          </span>
+        ) : (
+          <span
+            className="cat-picker__icon"
+            style={{
+              background: 'rgba(148, 163, 184, 0.14)',
+              border: '1px solid rgba(148, 163, 184, 0.25)',
+              color: '#94a3b8',
+              width: 24,
+              height: 24,
+            }}
+          >
+            <Tag size={13} strokeWidth={2.2} />
+          </span>
+        )}
+        <span className="qm-edit__cat-name">
+          {category ? category.label : 'Select category'}
+        </span>
+      </div>
+      <ChevronDown size={14} strokeWidth={2.5} className="qm-edit__cat-chev" />
+    </button>
+  )
+}
+
+// ── Edit history popover modal ──
+function EditHistoryModal({
+  entry,
+  side,
+  categories,
+  formatMoney,
+  timeFormat,
+  onClose,
+}: {
+  entry: Expense | IncomeEntry
+  side: 'expense' | 'income'
+  categories: Category[]
+  formatMoney: (n: number) => string
+  timeFormat: '12h' | '24h'
+  onClose: () => void
+}) {
+  const historyList = useMemo(() => {
+    return (entry.editHistory || []).slice().reverse()
+  }, [entry.editHistory])
+
+  return (
+    <>
+      <button
+        type="button"
+        className="cat-picker__backdrop"
+        onClick={onClose}
+        aria-label="Close edit history"
+      />
+      <div
+        className="cat-picker edit-history__dialog"
+        role="dialog"
+        aria-modal
+        aria-label="Edit history"
+      >
+        <div className="cat-picker__handle" />
+
+        <div className="cat-picker__header">
+          <div className="edit-history__title-wrap">
+            <h3 className="cat-picker__title">Edit history</h3>
+            <span className="edit-history__count">
+              {historyList.length} previous version{historyList.length === 1 ? '' : 's'}
+            </span>
+          </div>
+          <button
+            type="button"
+            className="quick-modal__close"
+            onClick={onClose}
+            aria-label="Close edit history"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="edit-history__body">
+          {historyList.length === 0 ? (
+            <div className="edit-history__empty">No prior versions found.</div>
+          ) : (
+            <div className="edit-history__list">
+              {historyList.map((item, idx) => {
+                const catObj = item.category
+                  ? categories.find(
+                      (c) =>
+                        c.label.toLowerCase() === item.category?.toLowerCase() ||
+                        c.id.toLowerCase() === item.category?.toLowerCase(),
+                    )
+                  : null
+
+                return (
+                  <div key={idx} className="edit-history__item">
+                    <div className="edit-history__item-top">
+                      <span className="edit-history__item-time">
+                        {formatDateTime(item.editedAt, timeFormat)}
+                      </span>
+                      <span
+                        className={`edit-history__item-amount ${side === 'income' ? 'qm-item__amount--income' : ''}`}
+                      >
+                        {formatMoney(item.amount)}
+                      </span>
+                    </div>
+                    <div className="edit-history__item-content">
+                      {catObj ? (
+                        <div className="qm-item__cat-row">
+                          <span
+                            className="qm-item__cat-icon"
+                            style={{
+                              background: catObj.bg,
+                              border: `1px solid ${catObj.border}`,
+                              color: catObj.color,
+                              width: 20,
+                              height: 20,
+                            }}
+                          >
+                            <catObj.Icon size={11} strokeWidth={2.2} />
+                          </span>
+                          <span className="qm-item__cat-label">{catObj.label}</span>
+                          {item.description ? (
+                            <span className="qm-item__cat-note">• {item.description}</span>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <span className="qm-item__desc-fallback">
+                          {item.description || (item.category ? `[${item.category}]` : '—')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        <button
+          type="button"
+          className="cat-picker__dismiss"
+          onClick={onClose}
+        >
+          Close
+        </button>
+      </div>
+    </>
+  )
+}
+
 export function QuickEntryModal({
   open,
   dateIso,
@@ -975,8 +1152,15 @@ export function QuickEntryModal({
   const [openPanel, setOpenPanel] = useState<'expense' | 'income' | 'currency' | null>(null)
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null)
   const [editingIncomeId, setEditingIncomeId] = useState<string | null>(null)
+  const [editCategory, setEditCategory] = useState<Category | null>(null)
   const [editDesc, setEditDesc] = useState('')
   const [editAmount, setEditAmount] = useState('')
+  const [expiredWarningId, setExpiredWarningId] = useState<string | null>(null)
+  const [viewingHistory, setViewingHistory] = useState<{
+    entry: Expense | IncomeEntry
+    side: 'expense' | 'income'
+  } | null>(null)
+  const [catPickerTarget, setCatPickerTarget] = useState<'add' | 'edit'>('add')
 
   // Callback ref to snapshot manage-mode history before saving a custom category edit
   const editBeforeSaveCallbackRef = useRef<(() => void) | null>(null)
@@ -1033,15 +1217,21 @@ export function QuickEntryModal({
     setSelectedIncomeCategory(null)
   }
 
-
   function togglePanel(panel: 'expense' | 'income' | 'currency'): void {
     setOpenPanel((prev) => (prev === panel ? null : panel))
   }
 
   function startEditExpense(item: Expense): void {
+    if (!isWithin24Hours(item.createdAt)) {
+      setExpiredWarningId(item.id)
+      return
+    }
+    setExpiredWarningId(null)
     setEditingExpenseId(item.id)
     setEditingIncomeId(null)
-    setEditDesc(item.description)
+    const { category, note } = parseEntryCategory(item.description, mergedExpenseCategories)
+    setEditCategory(category)
+    setEditDesc(note)
     setEditAmount(String(item.amount))
   }
 
@@ -1049,15 +1239,26 @@ export function QuickEntryModal({
     if (!editingExpenseId) return
     const n = parseFloat(editAmount.replace(',', '.'))
     if (Number.isNaN(n) || n <= 0) return
-    onUpdateExpense(editingExpenseId, editDesc.trim(), n)
+    const catPrefix = editCategory ? `[${editCategory.label}] ` : ''
+    const finalDesc = catPrefix + editDesc.trim()
+    onUpdateExpense(editingExpenseId, finalDesc.trim(), n)
     setEditingExpenseId(null)
+    setEditCategory(null)
+    setEditDesc('')
+    setEditAmount('')
   }
 
   function startEditIncome(item: IncomeEntry): void {
-    if (!canEditIncome(item.createdAt)) return
+    if (!isWithin24Hours(item.createdAt)) {
+      setExpiredWarningId(item.id)
+      return
+    }
+    setExpiredWarningId(null)
     setEditingIncomeId(item.id)
     setEditingExpenseId(null)
-    setEditDesc(item.description)
+    const { category, note } = parseEntryCategory(item.description, mergedIncomeCategories)
+    setEditCategory(category)
+    setEditDesc(note)
     setEditAmount(String(item.amount))
   }
 
@@ -1065,8 +1266,21 @@ export function QuickEntryModal({
     if (!editingIncomeId) return
     const n = parseFloat(editAmount.replace(',', '.'))
     if (Number.isNaN(n) || n <= 0) return
-    onUpdateIncome(editingIncomeId, editDesc.trim(), n)
+    const catPrefix = editCategory ? `[${editCategory.label}] ` : ''
+    const finalDesc = catPrefix + editDesc.trim()
+    onUpdateIncome(editingIncomeId, finalDesc.trim(), n)
     setEditingIncomeId(null)
+    setEditCategory(null)
+    setEditDesc('')
+    setEditAmount('')
+  }
+
+  function cancelEdit(): void {
+    setEditingExpenseId(null)
+    setEditingIncomeId(null)
+    setEditCategory(null)
+    setEditDesc('')
+    setEditAmount('')
   }
 
   // ── Custom Category Handlers ──
@@ -1102,31 +1316,44 @@ export function QuickEntryModal({
     if (side === 'income' && selectedIncomeCategory?.id === cat.id) {
       setSelectedIncomeCategory(null)
     }
+    if (editCategory?.id === cat.id) {
+      setEditCategory(null)
+    }
   }
 
   function handleSaveCustomCategory(cat: CustomCategory): void {
+    const catObj = customCategoryToCategory(cat)
     if (editingCustomCat) {
       editBeforeSaveCallbackRef.current?.()
       editBeforeSaveCallbackRef.current = null
       onUpdateCustomCategory?.(customSheetSide, cat)
-      const updatedCatObj = customCategoryToCategory(cat)
+      if (catPickerTarget === 'edit' && editCategory?.id === cat.id) {
+        setEditCategory(catObj)
+      }
       if (customSheetSide === 'expense' && selectedCategory?.id === cat.id) {
-        setSelectedCategory(updatedCatObj)
+        setSelectedCategory(catObj)
       }
       if (customSheetSide === 'income' && selectedIncomeCategory?.id === cat.id) {
-        setSelectedIncomeCategory(updatedCatObj)
+        setSelectedIncomeCategory(catObj)
       }
     } else {
       editBeforeSaveCallbackRef.current = null
       onAddCustomCategory?.(customSheetSide, cat)
-      // Automatically select newly added custom category and insert its chip
-      const catObj = customCategoryToCategory(cat)
-      if (customSheetSide === 'expense') {
-        setSelectedCategory(catObj)
-        setCatPickerOpen(false)
+      if (catPickerTarget === 'edit') {
+        setEditCategory(catObj)
+        if (customSheetSide === 'expense') {
+          setCatPickerOpen(false)
+        } else {
+          setIncomeCatPickerOpen(false)
+        }
       } else {
-        setSelectedIncomeCategory(catObj)
-        setIncomeCatPickerOpen(false)
+        if (customSheetSide === 'expense') {
+          setSelectedCategory(catObj)
+          setCatPickerOpen(false)
+        } else {
+          setSelectedIncomeCategory(catObj)
+          setIncomeCatPickerOpen(false)
+        }
       }
     }
     setCustomSheetOpen(false)
@@ -1213,7 +1440,10 @@ export function QuickEntryModal({
                       <button
                         type="button"
                         className="desc-field__cat-btn"
-                        onClick={() => setCatPickerOpen(true)}
+                        onClick={() => {
+                          setCatPickerTarget('add')
+                          setCatPickerOpen(true)
+                        }}
                         aria-label="Pick category"
                         title="Pick category"
                       >
@@ -1245,12 +1475,19 @@ export function QuickEntryModal({
                       .map((e) => (
                         <li key={e.id} className="quick-modal__item quick-modal__item--col">
                           {editingExpenseId === e.id ? (
-                            <>
+                            <div className="qm-edit__container">
+                              <EditCategorySelectorRow
+                                category={editCategory}
+                                onOpenPicker={() => {
+                                  setCatPickerTarget('edit')
+                                  setCatPickerOpen(true)
+                                }}
+                              />
                               <input
                                 className="sheet__input"
                                 value={editDesc}
                                 onChange={(ev) => setEditDesc(ev.target.value)}
-                                placeholder="Description"
+                                placeholder="Description (optional)"
                               />
                               <div className="quick-modal__row">
                                 <input
@@ -1263,8 +1500,11 @@ export function QuickEntryModal({
                                 <button type="button" className="btn btn--primary" onClick={saveExpenseEdit}>
                                   Save
                                 </button>
+                                <button type="button" className="btn btn--ghost" onClick={cancelEdit}>
+                                  Cancel
+                                </button>
                               </div>
-                            </>
+                            </div>
                           ) : (
                             <>
                               <div className="quick-modal__item-top">
@@ -1275,7 +1515,20 @@ export function QuickEntryModal({
                                 <span className="qm-item__amount">{formatMoney(e.amount)}</span>
                               </div>
                               <div className="quick-modal__item-meta">
-                                <span>{formatDateTime(e.createdAt, timeFormat)}</span>
+                                <div className="qm-item__meta-time">
+                                  <span>{formatDateTime(e.updatedAt || e.createdAt, timeFormat)}</span>
+                                  {e.editHistory && e.editHistory.length > 0 ? (
+                                    <button
+                                      type="button"
+                                      className="qm-item__edited-tag"
+                                      onClick={() => setViewingHistory({ entry: e, side: 'expense' })}
+                                      title="View edit history"
+                                      aria-label="View edit history"
+                                    >
+                                      (edited)
+                                    </button>
+                                  ) : null}
+                                </div>
                                 <div className="quick-modal__item-actions">
                                   <button type="button" className="btn btn--ghost" onClick={() => startEditExpense(e)}>
                                     Edit
@@ -1285,6 +1538,12 @@ export function QuickEntryModal({
                                   </button>
                                 </div>
                               </div>
+                              {expiredWarningId === e.id && (
+                                <div className="qm-item__expired-warning" role="alert">
+                                  <TriangleAlert size={13} strokeWidth={2.4} />
+                                  <span>Editing window expired — entries can only be edited within 24 hours.</span>
+                                </div>
+                              )}
                             </>
                           )}
                         </li>
@@ -1342,7 +1601,10 @@ export function QuickEntryModal({
                   <button
                     type="button"
                     className="desc-field__cat-btn"
-                    onClick={() => setIncomeCatPickerOpen(true)}
+                    onClick={() => {
+                      setCatPickerTarget('add')
+                      setIncomeCatPickerOpen(true)
+                    }}
                     aria-label="Pick category"
                     title="Pick category"
                   >
@@ -1366,68 +1628,92 @@ export function QuickEntryModal({
                   {incomeForMonth.length === 0 ? (
                     <li className="quick-modal__empty">No income entries yet</li>
                   ) : (
-                    incomeForMonth.map((e) => {
-                      const editable = canEditIncome(e.createdAt)
-                      return (
-                        <li key={e.id} className="quick-modal__item quick-modal__item--col">
-                          {editingIncomeId === e.id ? (
-                            <>
+                    incomeForMonth.map((e) => (
+                      <li key={e.id} className="quick-modal__item quick-modal__item--col">
+                        {editingIncomeId === e.id ? (
+                          <div className="qm-edit__container">
+                            <EditCategorySelectorRow
+                              category={editCategory}
+                              onOpenPicker={() => {
+                                setCatPickerTarget('edit')
+                                setIncomeCatPickerOpen(true)
+                              }}
+                            />
+                            <input
+                              className="sheet__input"
+                              value={editDesc}
+                              onChange={(ev) => setEditDesc(ev.target.value)}
+                              placeholder="Description (optional)"
+                            />
+                            <div className="quick-modal__row">
                               <input
                                 className="sheet__input"
-                                value={editDesc}
-                                onChange={(ev) => setEditDesc(ev.target.value)}
-                                placeholder="Description"
+                                value={editAmount}
+                                onChange={(ev) => setEditAmount(ev.target.value)}
+                                inputMode="decimal"
+                                placeholder="Amount"
                               />
-                              <div className="quick-modal__row">
-                                <input
-                                  className="sheet__input"
-                                  value={editAmount}
-                                  onChange={(ev) => setEditAmount(ev.target.value)}
-                                  inputMode="decimal"
-                                  placeholder="Amount"
-                                />
-                                <button type="button" className="btn btn--primary" onClick={saveIncomeEdit}>
-                                  Save
+                              <button type="button" className="btn btn--primary" onClick={saveIncomeEdit}>
+                                Save
+                              </button>
+                              <button type="button" className="btn btn--ghost" onClick={cancelEdit}>
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="quick-modal__item-top">
+                              <TransactionCategoryDisplay
+                                description={e.description}
+                                categories={mergedIncomeCategories}
+                              />
+                              <span className="qm-item__amount qm-item__amount--income">
+                                {formatMoney(e.amount)}
+                              </span>
+                            </div>
+                            <div className="quick-modal__item-meta">
+                              <div className="qm-item__meta-time">
+                                <span>{formatDateTime(e.updatedAt || e.createdAt, timeFormat)}</span>
+                                {e.editHistory && e.editHistory.length > 0 ? (
+                                  <button
+                                    type="button"
+                                    className="qm-item__edited-tag"
+                                    onClick={() => setViewingHistory({ entry: e, side: 'income' })}
+                                    title="View edit history"
+                                    aria-label="View edit history"
+                                  >
+                                    (edited)
+                                  </button>
+                                ) : null}
+                              </div>
+                              <div className="quick-modal__item-actions">
+                                <button
+                                  type="button"
+                                  className="btn btn--ghost"
+                                  onClick={() => startEditIncome(e)}
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn--danger"
+                                  onClick={() => onDeleteIncome(e.id)}
+                                >
+                                  Delete
                                 </button>
                               </div>
-                            </>
-                          ) : (
-                            <>
-                              <div className="quick-modal__item-top">
-                                <TransactionCategoryDisplay
-                                  description={e.description}
-                                  categories={mergedIncomeCategories}
-                                />
-                                <span className="qm-item__amount qm-item__amount--income">
-                                  {formatMoney(e.amount)}
-                                </span>
+                            </div>
+                            {expiredWarningId === e.id && (
+                              <div className="qm-item__expired-warning" role="alert">
+                                <TriangleAlert size={13} strokeWidth={2.4} />
+                                <span>Editing window expired — entries can only be edited within 24 hours.</span>
                               </div>
-                              <div className="quick-modal__item-meta">
-                                <span>{formatDateTime(e.createdAt, timeFormat)}</span>
-                                <div className="quick-modal__item-actions">
-                                  <button
-                                    type="button"
-                                    className="btn btn--ghost"
-                                    disabled={!editable}
-                                    onClick={() => startEditIncome(e)}
-                                  >
-                                    Edit
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="btn btn--danger"
-                                    disabled={!editable}
-                                    onClick={() => onDeleteIncome(e.id)}
-                                  >
-                                    Delete
-                                  </button>
-                                </div>
-                              </div>
-                            </>
-                          )}
-                        </li>
-                      )
-                    })
+                            )}
+                          </>
+                        )}
+                      </li>
+                    ))
                   )}
                 </ul>
               </div>
@@ -1444,9 +1730,17 @@ export function QuickEntryModal({
           customCategories={customExpenseCategories}
           categoryOrder={expenseCategoryOrder}
           hiddenPresets={expenseHiddenPresets}
-          selected={selectedCategory?.id ?? null}
+          selected={
+            catPickerTarget === 'edit'
+              ? editCategory?.id ?? null
+              : selectedCategory?.id ?? null
+          }
           onSelect={(cat) => {
-            setSelectedCategory(cat)
+            if (catPickerTarget === 'edit') {
+              setEditCategory(cat)
+            } else {
+              setSelectedCategory(cat)
+            }
             setCatPickerOpen(false)
           }}
           onClose={() => setCatPickerOpen(false)}
@@ -1464,9 +1758,17 @@ export function QuickEntryModal({
           customCategories={customIncomeCategories}
           categoryOrder={incomeCategoryOrder}
           hiddenPresets={incomeHiddenPresets}
-          selected={selectedIncomeCategory?.id ?? null}
+          selected={
+            catPickerTarget === 'edit'
+              ? editCategory?.id ?? null
+              : selectedIncomeCategory?.id ?? null
+          }
           onSelect={(cat) => {
-            setSelectedIncomeCategory(cat)
+            if (catPickerTarget === 'edit') {
+              setEditCategory(cat)
+            } else {
+              setSelectedIncomeCategory(cat)
+            }
             setIncomeCatPickerOpen(false)
           }}
           onClose={() => setIncomeCatPickerOpen(false)}
@@ -1492,6 +1794,22 @@ export function QuickEntryModal({
           setEditingCustomCat(null)
         }}
       />
+
+      {/* ── Edit History Modal Popover ── */}
+      {viewingHistory && (
+        <EditHistoryModal
+          entry={viewingHistory.entry}
+          side={viewingHistory.side}
+          categories={
+            viewingHistory.side === 'expense'
+              ? mergedExpenseCategories
+              : mergedIncomeCategories
+          }
+          formatMoney={formatMoney}
+          timeFormat={timeFormat}
+          onClose={() => setViewingHistory(null)}
+        />
+      )}
     </>
   )
 }

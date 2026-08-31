@@ -50,12 +50,19 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000
 
 export function hoursRemaining24h(createdAtISO: string): number {
   const created = new Date(createdAtISO).getTime()
+  if (Number.isNaN(created)) return 0
   const deadline = created + MS_PER_DAY
   return Math.max(0, (deadline - Date.now()) / (60 * 60 * 1000))
 }
 
+export function isWithin24Hours(createdAtISO: string): boolean {
+  const created = new Date(createdAtISO).getTime()
+  if (Number.isNaN(created)) return false
+  return Date.now() - created <= MS_PER_DAY
+}
+
 export function canEditIncome(createdAtISO: string): boolean {
-  return hoursRemaining24h(createdAtISO) > 0
+  return isWithin24Hours(createdAtISO)
 }
 
 export function formatCompactAmount(

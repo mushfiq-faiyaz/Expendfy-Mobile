@@ -1705,6 +1705,195 @@ body {
   font-size: 0.82rem;
 }
 
+/* ─── Quick-modal item meta time & (edited) badge ─────────────── */
+.qm-item__meta-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.qm-item__edited-tag {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.70rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgba(148, 163, 184, 0.4);
+  text-underline-offset: 2px;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.qm-item__edited-tag:hover {
+  color: #cbd5e1;
+  text-decoration-color: rgba(203, 213, 225, 0.8);
+}
+
+/* ─── 24h Edit Expired Inline Warning ─────────────────────────── */
+.qm-item__expired-warning {
+  margin-top: 6px;
+  padding: 6px 9px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  color: #ff5c5c;
+  font-size: 0.73rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: qmFadeIn 0.2s ease-out;
+}
+
+@keyframes qmFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Edit container & Redesigned Category Selector Row ───────── */
+.qm-edit__container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.qm-edit__cat-row {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-input);
+  background: rgba(10, 18, 38, 0.60);
+  border: 1px solid rgba(148, 163, 184, 0.20);
+  cursor: pointer;
+  box-sizing: border-box;
+  width: 100%;
+  transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
+}
+
+.qm-edit__cat-row:hover {
+  background: rgba(15, 28, 55, 0.75);
+  border-color: rgba(96, 165, 250, 0.50);
+}
+
+.qm-edit__cat-row:focus-visible {
+  border-color: rgba(96, 165, 250, 0.70);
+  box-shadow: var(--blue-glow);
+}
+
+.qm-edit__cat-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.qm-edit__cat-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qm-edit__cat-chev {
+  color: #94a3b8;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.qm-edit__cat-row:hover .qm-edit__cat-chev {
+  color: #f8fafc;
+}
+
+/* ─── Edit History Popover / Modal ────────────────────────────── */
+.edit-history__dialog {
+  max-height: 80vh;
+  max-height: 80dvh;
+}
+
+.edit-history__title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.edit-history__count {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 400;
+}
+
+.edit-history__body {
+  margin-top: 12px;
+  max-height: 48vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.edit-history__empty {
+  text-align: center;
+  color: #64748b;
+  font-size: 0.82rem;
+  padding: 24px 0;
+}
+
+.edit-history__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-history__item {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.edit-history__item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.edit-history__item-time {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.edit-history__item-amount {
+  font-weight: 700;
+  font-size: 0.86rem;
+  color: #f8fafc;
+}
+
+.edit-history__item-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
 /* ── Quick-modal amount row (input + Add button side-by-side) ──── */
 .quick-modal__row {
   display: flex;

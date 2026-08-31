@@ -1,9 +1,18 @@
+export type EditHistoryItem = {
+  amount: number
+  category?: string
+  description?: string
+  editedAt: string
+}
+
 export type Expense = {
   id: string
   date: string
   description: string
   amount: number
   createdAt: string
+  updatedAt?: string
+  editHistory?: EditHistoryItem[]
 }
 
 export type IncomeEntry = {
@@ -11,6 +20,8 @@ export type IncomeEntry = {
   amount: number
   description: string
   createdAt: string
+  updatedAt?: string
+  editHistory?: EditHistoryItem[]
 }
 
 export type CustomCategory = {

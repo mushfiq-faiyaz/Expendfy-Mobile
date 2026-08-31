@@ -27,10 +27,11 @@ import {
   EXPENSE_CATEGORIES,
   INCOME_CATEGORIES,
   customCategoryToCategory,
+  parseEntryCategory,
 } from './categories'
 import { daysInMonth, parseISODate, toISODate } from './dateUtils'
 import { useNotification } from './hooks/useNotification'
-import type { CustomCategory, Expense, IncomeEntry } from './types'
+import type { CustomCategory, EditHistoryItem, Expense, IncomeEntry } from './types'
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
@@ -291,9 +292,29 @@ export default function App() {
   function updateExpense(id: string, description: string, amount: number): void {
     setExpenses((prev) => {
       const normalized = description.trim()
-      const next = prev.map((e) =>
-        e.id === id ? { ...e, description: normalized || e.description, amount } : e,
-      )
+      const nowIso = new Date().toISOString()
+      const allExpenseCats = [
+        ...EXPENSE_CATEGORIES,
+        ...customExpenseCategories.map(customCategoryToCategory),
+      ]
+      const next = prev.map((e) => {
+        if (e.id !== id) return e
+        const parsed = parseEntryCategory(e.description, allExpenseCats)
+        const historyItem: EditHistoryItem = {
+          amount: e.amount,
+          category: parsed.category?.label || '',
+          description: parsed.note || (parsed.category ? '' : e.description),
+          editedAt: nowIso,
+        }
+        const existingHistory = e.editHistory || []
+        return {
+          ...e,
+          description: normalized || e.description,
+          amount,
+          updatedAt: nowIso,
+          editHistory: [...existingHistory, historyItem],
+        }
+      })
       saveExpenses(next)
       return next
     })
@@ -326,9 +347,29 @@ export default function App() {
   function updateIncome(id: string, description: string, amount: number): void {
     setIncomeEntries((prev) => {
       const normalized = description.trim()
-      const next = prev.map((e) =>
-        e.id === id ? { ...e, description: normalized || e.description, amount } : e,
-      )
+      const nowIso = new Date().toISOString()
+      const allIncomeCats = [
+        ...INCOME_CATEGORIES,
+        ...customIncomeCategories.map(customCategoryToCategory),
+      ]
+      const next = prev.map((e) => {
+        if (e.id !== id) return e
+        const parsed = parseEntryCategory(e.description, allIncomeCats)
+        const historyItem: EditHistoryItem = {
+          amount: e.amount,
+          category: parsed.category?.label || '',
+          description: parsed.note || (parsed.category ? '' : e.description),
+          editedAt: nowIso,
+        }
+        const existingHistory = e.editHistory || []
+        return {
+          ...e,
+          description: normalized || e.description,
+          amount,
+          updatedAt: nowIso,
+          editHistory: [...existingHistory, historyItem],
+        }
+      })
       saveIncome(next)
       return next
     })
