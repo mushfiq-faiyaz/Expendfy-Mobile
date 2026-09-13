@@ -20,7 +20,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { ChevronDown, History, Minus, Pencil, Plus, Redo2, RotateCcw, Tag, Trash2, TriangleAlert, Undo2, X } from 'lucide-react'
-import { formatDisplayDate, getBackdatedClass, isWithin24Hours, toISODate } from '../dateUtils'
+import { formatDateTime, formatDisplayDate, formatMonthDay, getBackdatedClass, getEntryTargetDate, isWithin24Hours, toISODate } from '../dateUtils'
 import type { ActivityLogItem, CustomCategory, Expense, IncomeEntry } from '../types'
 import {
   EXPENSE_CATEGORIES,
@@ -73,18 +73,6 @@ type Props = {
     side: 'expense' | 'income',
     state: ManageCategorySnapshot,
   ) => void
-}
-
-function formatDateTime(iso: string, timeFormat: '12h' | '24h'): string {
-  return new Date(iso).toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: timeFormat === '12h',
-  })
 }
 
 // ── Tiny category chip shown inside the description wrapper ───────
@@ -1505,7 +1493,32 @@ export function QuickEntryModal({
                                   description={e.description}
                                   categories={mergedExpenseCategories}
                                 />
-                                <span className="qm-item__amount">{formatMoney(e.amount)}</span>
+                                <div className="entry-amount-col qm-item__amount-col">
+                                  <span className="qm-item__amount">{formatMoney(e.amount)}</span>
+                                  {getEntryTargetDate(e, dateIso) && (
+                                    <span className="entry-for-date qm-item__for-date">
+                                      for{' '}
+                                      <span
+                                        className="entry-for-date__pill qm-item__for-date-pill"
+                                        style={{
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          padding: '1.5px 6px',
+                                          borderRadius: '9999px',
+                                          background: 'rgba(59, 130, 246, 0.18)',
+                                          border: '1px solid rgba(59, 130, 246, 0.35)',
+                                          color: '#60a5fa',
+                                          fontSize: '0.68rem',
+                                          fontWeight: 600,
+                                          letterSpacing: '0.01em',
+                                          lineHeight: '1.2',
+                                        }}
+                                      >
+                                        {formatMonthDay(getEntryTargetDate(e, dateIso)!)}
+                                      </span>
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                               <div className="quick-modal__item-meta">
                                 <div className="qm-item__meta-time">
@@ -1700,9 +1713,34 @@ export function QuickEntryModal({
                                 description={e.description}
                                 categories={mergedIncomeCategories}
                               />
-                              <span className="qm-item__amount qm-item__amount--income">
-                                {formatMoney(e.amount)}
-                              </span>
+                              <div className="entry-amount-col qm-item__amount-col">
+                                <span className="qm-item__amount qm-item__amount--income">
+                                  {formatMoney(e.amount)}
+                                </span>
+                                {getEntryTargetDate(e) && (
+                                  <span className="entry-for-date qm-item__for-date">
+                                    for{' '}
+                                    <span
+                                      className="entry-for-date__pill qm-item__for-date-pill"
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        padding: '1.5px 6px',
+                                        borderRadius: '9999px',
+                                        background: 'rgba(59, 130, 246, 0.18)',
+                                        border: '1px solid rgba(59, 130, 246, 0.35)',
+                                        color: '#60a5fa',
+                                        fontSize: '0.68rem',
+                                        fontWeight: 600,
+                                        letterSpacing: '0.01em',
+                                        lineHeight: '1.2',
+                                      }}
+                                    >
+                                      {formatMonthDay(getEntryTargetDate(e)!)}
+                                    </span>
+                                  </span>
+                                )}
+                              </div>
                             </div>
                             <div className="quick-modal__item-meta">
                               <div className="qm-item__meta-time">

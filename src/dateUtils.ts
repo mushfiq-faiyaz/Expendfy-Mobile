@@ -100,6 +100,25 @@ export function formatMonthDay(dateOrIso: string | Date): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+
+/**
+ * Formats timestamp as 'Mon, Aug 31, 2026, 6:20 PM' (or 24h equivalent).
+ * Always includes the short weekday name and numeric year.
+ */
+export function formatDateTime(iso: string, timeFormat: '12h' | '24h'): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: timeFormat === '12h',
+  })
+}
+
 /** Extracts local YYYY-MM-DD from ISO string or date-only string */
 export function extractDateOnly(dateOrIso: string): string {
   if (!dateOrIso) return ''
@@ -173,3 +192,24 @@ export function isBackdated(entry: BackdateCheckable, fallbackTargetDate?: strin
 export function getBackdatedClass(entry: BackdateCheckable, fallbackTargetDate?: string): string {
   return isBackdated(entry, fallbackTargetDate) ? 'entry-item--backdated' : ''
 }
+
+/**
+ * Returns the target date an entry was recorded for (targetDate or date),
+ * using the existing snapshot / fallback logic.
+ */
+export function getEntryTargetDate(entry: BackdateCheckable, fallbackTargetDate?: string): string | undefined {
+  if (!entry) return undefined
+
+  if ('entrySnapshotBefore' in entry && entry.entrySnapshotBefore) {
+    return (
+      entry.entrySnapshotBefore.targetDate ||
+      entry.entrySnapshotBefore.date ||
+      entry.entrySnapshotAfter?.targetDate ||
+      entry.entrySnapshotAfter?.date ||
+      fallbackTargetDate
+    )
+  }
+
+  return entry.targetDate || entry.date || fallbackTargetDate
+}
+

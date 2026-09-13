@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Expense } from '../types'
-import { formatDisplayDate, toISODate } from '../dateUtils'
+import { formatDateTime, formatDisplayDate, toISODate } from '../dateUtils'
 import { EXPENSE_CATEGORIES, type Category } from '../categories'
 import { TransactionCategoryDisplay } from './TransactionCategoryDisplay'
 
@@ -18,15 +18,7 @@ type Props = {
 }
 
 function formatExactDateTime(iso: string, timeFormat: '12h' | '24h'): string {
-  return new Date(iso).toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: timeFormat === '12h',
-  })
+  return formatDateTime(iso, timeFormat)
 }
 
 export function ExpenseSheet({

@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { formatDateTime } from '../dateUtils'
 import type { Expense, IncomeEntry } from '../types'
 import type { Category } from '../categories'
 
@@ -9,18 +10,6 @@ type Props = {
   formatMoney: (n: number) => string
   timeFormat: '12h' | '24h'
   onClose: () => void
-}
-
-function formatDateTime(iso: string, timeFormat: '12h' | '24h'): string {
-  return new Date(iso).toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: timeFormat === '12h',
-  })
 }
 
 export function EditHistoryModal({

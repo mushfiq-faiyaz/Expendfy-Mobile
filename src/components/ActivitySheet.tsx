@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
-import { getBackdatedClass } from '../dateUtils'
+import { formatDateTime, formatMonthDay, getBackdatedClass, getEntryTargetDate } from '../dateUtils'
 import type { ActivityLogItem, EntrySnapshot, Expense, IncomeEntry } from '../types'
 import type { Category } from '../categories'
 
@@ -14,18 +14,6 @@ type Props = {
   timeFormat: '12h' | '24h'
   onClose: () => void
   onOpenEditHistory: (entry: Expense | IncomeEntry, side: 'expense' | 'income') => void
-}
-
-function formatDateTime(iso: string, timeFormat: '12h' | '24h'): string {
-  return new Date(iso).toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: timeFormat === '12h',
-  })
 }
 
 function getEditSummary(
@@ -183,6 +171,8 @@ export function ActivitySheet({
                     ? getEditSummary(item.entrySnapshotBefore, item.entrySnapshotAfter, formatMoney)
                     : null
 
+                const targetDate = getEntryTargetDate(item)
+
                 if (item.type === 'added') {
                   return (
                     <div
@@ -199,13 +189,20 @@ export function ActivitySheet({
                             <span>Added</span>
                           </span>
                         </div>
-                        <span
-                          className={`edit-history__item-amount ${
-                            item.side === 'income' ? 'qm-item__amount--income' : ''
-                          }`}
-                        >
-                          {formatMoney(displayAmount)}
-                        </span>
+                        <div className="entry-amount-col">
+                          <span
+                            className={`edit-history__item-amount ${
+                              item.side === 'income' ? 'qm-item__amount--income' : ''
+                            }`}
+                          >
+                            {formatMoney(displayAmount)}
+                          </span>
+                          {targetDate && (
+                            <span className="entry-for-date">
+                              for <span className="entry-for-date__pill">{formatMonthDay(targetDate)}</span>
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <div className="edit-history__item-content">
@@ -256,9 +253,16 @@ export function ActivitySheet({
                             <span>Deleted</span>
                           </span>
                         </div>
-                        <span className="edit-history__item-amount activity-item__amount--deleted">
-                          {formatMoney(displayAmount)}
-                        </span>
+                        <div className="entry-amount-col">
+                          <span className="edit-history__item-amount activity-item__amount--deleted">
+                            {formatMoney(displayAmount)}
+                          </span>
+                          {targetDate && (
+                            <span className="entry-for-date">
+                              for <span className="entry-for-date__pill">{formatMonthDay(targetDate)}</span>
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <div className="edit-history__item-content">
@@ -324,13 +328,20 @@ export function ActivitySheet({
                           (edited)
                         </button>
                       </div>
-                      <span
-                        className={`edit-history__item-amount ${
-                          item.side === 'income' ? 'qm-item__amount--income' : ''
-                        }`}
-                      >
-                        {formatMoney(displayAmount)}
-                      </span>
+                      <div className="entry-amount-col">
+                        <span
+                          className={`edit-history__item-amount ${
+                            item.side === 'income' ? 'qm-item__amount--income' : ''
+                          }`}
+                        >
+                          {formatMoney(displayAmount)}
+                        </span>
+                        {targetDate && (
+                          <span className="entry-for-date">
+                            for <span className="entry-for-date__pill">{formatMonthDay(targetDate)}</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="edit-history__item-content">
