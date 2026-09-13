@@ -51,6 +51,7 @@ export type EntrySnapshot = {
   rawDescription?: string
   createdAt: string
   date?: string
+  targetDate?: string
 }
 
 export type ActivityLogItem = {

@@ -2218,6 +2218,40 @@ body {
   transform: scale(0.99);
 }
 
+/* ─── Backdated Entry List Item Accent ────────────────────────── */
+.entry-item--backdated {
+  background: rgba(239, 68, 68, 0.09);
+  border-color: rgba(239, 68, 68, 0.25);
+  border-left: 3px solid #ef4444;
+}
+
+.quick-modal__item.entry-item--backdated {
+  background: rgba(239, 68, 68, 0.09);
+  border-color: rgba(239, 68, 68, 0.25);
+  border-left: 3px solid #ef4444;
+}
+
+.quick-modal__item.entry-item--backdated:hover {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.edit-history__item.entry-item--backdated {
+  background: rgba(239, 68, 68, 0.09);
+  border-color: rgba(239, 68, 68, 0.25);
+  border-left: 3px solid #ef4444;
+}
+
+.activity-item--edited.entry-item--backdated:hover {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.40);
+  border-left: 3px solid #f87171;
+}
+
+.activity-item--edited.entry-item--backdated:active {
+  background: rgba(239, 68, 68, 0.20);
+}
+
 .activity-item__desc {
   max-width: 200px;
   overflow: hidden;

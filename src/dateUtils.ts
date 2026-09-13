@@ -116,3 +116,60 @@ export function isDateMismatch(targetDate: string, createdAt: string): boolean {
   const created = extractDateOnly(createdAt)
   return Boolean(target && created && target !== created)
 }
+
+export type BackdateCheckable =
+  | {
+      targetDate?: string
+      date?: string
+      createdAt?: string
+      entrySnapshotBefore?: {
+        targetDate?: string
+        date?: string
+        createdAt?: string
+      }
+      entrySnapshotAfter?: {
+        targetDate?: string
+        date?: string
+        createdAt?: string
+      }
+      timestamp?: string
+    }
+  | null
+  | undefined
+
+/**
+ * Returns true if an entry's targetDate (or date recorded against) differs
+ * from the date it was created (createdAt date-only).
+ */
+export function isBackdated(entry: BackdateCheckable, fallbackTargetDate?: string): boolean {
+  if (!entry) return false
+
+  let targetDate: string | undefined
+  let createdAt: string | undefined
+
+  if ('entrySnapshotBefore' in entry && entry.entrySnapshotBefore) {
+    targetDate =
+      entry.entrySnapshotBefore.targetDate ||
+      entry.entrySnapshotBefore.date ||
+      entry.entrySnapshotAfter?.targetDate ||
+      entry.entrySnapshotAfter?.date ||
+      fallbackTargetDate
+    createdAt =
+      entry.entrySnapshotBefore.createdAt ||
+      entry.entrySnapshotAfter?.createdAt ||
+      entry.timestamp
+  } else {
+    targetDate = entry.targetDate || entry.date || fallbackTargetDate
+    createdAt = entry.createdAt
+  }
+
+  if (!targetDate || !createdAt) return false
+  return isDateMismatch(targetDate, createdAt)
+}
+
+/**
+ * Shared class helper for styling backdated entries with a red tint & left border accent.
+ */
+export function getBackdatedClass(entry: BackdateCheckable, fallbackTargetDate?: string): string {
+  return isBackdated(entry, fallbackTargetDate) ? 'entry-item--backdated' : ''
+}

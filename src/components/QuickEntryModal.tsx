@@ -20,7 +20,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { ChevronDown, History, Minus, Pencil, Plus, Redo2, RotateCcw, Tag, Trash2, TriangleAlert, Undo2, X } from 'lucide-react'
-import { formatDisplayDate, isWithin24Hours, toISODate } from '../dateUtils'
+import { formatDisplayDate, getBackdatedClass, isWithin24Hours, toISODate } from '../dateUtils'
 import type { ActivityLogItem, CustomCategory, Expense, IncomeEntry } from '../types'
 import {
   EXPENSE_CATEGORIES,
@@ -1447,7 +1447,10 @@ export function QuickEntryModal({
                       .slice()
                       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                       .map((e) => (
-                        <li key={e.id} className="quick-modal__item quick-modal__item--col">
+                        <li
+                          key={e.id}
+                          className={`quick-modal__item quick-modal__item--col ${getBackdatedClass(e, dateIso)}`.trim()}
+                        >
                           {editingExpenseId === e.id ? (
                             <div className="qm-edit__container">
                               <EditCategorySelectorRow
@@ -1639,7 +1642,10 @@ export function QuickEntryModal({
                     <li className="quick-modal__empty">No income entries yet</li>
                   ) : (
                     incomeForMonth.map((e) => (
-                      <li key={e.id} className="quick-modal__item quick-modal__item--col">
+                      <li
+                        key={e.id}
+                        className={`quick-modal__item quick-modal__item--col ${getBackdatedClass(e)}`.trim()}
+                      >
                         {editingIncomeId === e.id ? (
                           <div className="qm-edit__container">
                             <EditCategorySelectorRow

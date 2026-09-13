@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
+import { getBackdatedClass } from '../dateUtils'
 import type { ActivityLogItem, EntrySnapshot, Expense, IncomeEntry } from '../types'
 import type { Category } from '../categories'
 
@@ -184,7 +185,10 @@ export function ActivitySheet({
 
                 if (item.type === 'added') {
                   return (
-                    <div key={item.id} className="edit-history__item activity-item activity-item--added">
+                    <div
+                      key={item.id}
+                      className={`edit-history__item activity-item activity-item--added ${getBackdatedClass(item)}`.trim()}
+                    >
                       <div className="edit-history__item-top">
                         <div className="activity-item__meta-left">
                           <span className="edit-history__item-time">
@@ -238,7 +242,10 @@ export function ActivitySheet({
 
                 if (item.type === 'deleted') {
                   return (
-                    <div key={item.id} className="edit-history__item activity-item activity-item--deleted">
+                    <div
+                      key={item.id}
+                      className={`edit-history__item activity-item activity-item--deleted ${getBackdatedClass(item)}`.trim()}
+                    >
                       <div className="edit-history__item-top">
                         <div className="activity-item__meta-left">
                           <span className="edit-history__item-time">
@@ -289,7 +296,7 @@ export function ActivitySheet({
                 return (
                   <div
                     key={item.id}
-                    className="edit-history__item activity-item activity-item--edited"
+                    className={`edit-history__item activity-item activity-item--edited ${getBackdatedClass(item)}`.trim()}
                     onClick={() => handleOpenHistory(item)}
                     role="button"
                     tabIndex={0}
