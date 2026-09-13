@@ -119,6 +119,32 @@ export function formatDateTime(iso: string, timeFormat: '12h' | '24h'): string {
   })
 }
 
+/**
+ * Splits a datetime string (e.g. "Sun, Aug 23, 2026, 7:48 PM") into three parts:
+ *   - dayPrefix: the short weekday name, e.g. "Sun"
+ *   - monthDay:  the MMM D portion, e.g. "Aug 23"
+ *   - rest:      the year and time, e.g. "2026, 7:48 PM"
+ * Returns null if the string cannot be parsed into the expected shape.
+ */
+export function splitFormattedDateTime(
+  formatted: string,
+): { dayPrefix: string; monthDay: string; rest: string } | null {
+  // Expected format: "Sun, Aug 23, 2026, 7:48 PM"
+  // Split on the first comma to get the weekday
+  const firstComma = formatted.indexOf(',')
+  if (firstComma === -1) return null
+  const dayPrefix = formatted.slice(0, firstComma).trim() // "Sun"
+  const remainder = formatted.slice(firstComma + 1).trim() // "Aug 23, 2026, 7:48 PM"
+
+  // The next comma separates "Aug 23" from "2026, 7:48 PM"
+  const secondComma = remainder.indexOf(',')
+  if (secondComma === -1) return null
+  const monthDay = remainder.slice(0, secondComma).trim() // "Aug 23"
+  const rest = remainder.slice(secondComma + 1).trim()    // "2026, 7:48 PM"
+
+  return { dayPrefix, monthDay, rest }
+}
+
 /** Extracts local YYYY-MM-DD from ISO string or date-only string */
 export function extractDateOnly(dateOrIso: string): string {
   if (!dateOrIso) return ''

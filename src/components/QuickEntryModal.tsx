@@ -20,7 +20,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { ChevronDown, History, Minus, Pencil, Plus, Redo2, RotateCcw, Tag, Trash2, TriangleAlert, Undo2, X } from 'lucide-react'
-import { formatDateTime, formatDisplayDate, formatMonthDay, getBackdatedClass, getEntryTargetDate, isWithin24Hours, toISODate } from '../dateUtils'
+import { formatDateTime, formatDisplayDate, formatMonthDay, getBackdatedClass, getEntryTargetDate, isWithin24Hours, toISODate, splitFormattedDateTime, extractDateOnly } from '../dateUtils'
 import type { ActivityLogItem, CustomCategory, Expense, IncomeEntry } from '../types'
 import {
   EXPENSE_CATEGORIES,
@@ -1522,7 +1522,50 @@ export function QuickEntryModal({
                               </div>
                               <div className="quick-modal__item-meta">
                                 <div className="qm-item__meta-time">
-                                  <span>{formatDateTime(e.updatedAt || e.createdAt, timeFormat)}</span>
+                                  <span style={{ fontWeight: 600 }}>
+                                    {(() => {
+                                      const rawTs = formatDateTime(e.updatedAt || e.createdAt, timeFormat)
+                                      const parts = splitFormattedDateTime(rawTs)
+                                      if (!parts) return <>On {rawTs}</>
+                                      const targetDate = getEntryTargetDate(e, dateIso)
+                                      const creationDateStr = extractDateOnly(e.createdAt)
+                                      const targetDateStr = targetDate ? extractDateOnly(targetDate) : null
+                                      const sameDate = targetDateStr ? creationDateStr === targetDateStr : true
+                                      const pillBg = sameDate
+                                        ? 'rgba(34, 197, 94, 0.18)'
+                                        : 'rgba(239, 68, 68, 0.18)'
+                                      const pillBorder = sameDate
+                                        ? '1px solid rgba(34, 197, 94, 0.45)'
+                                        : '1px solid rgba(239, 68, 68, 0.45)'
+                                      const pillColor = sameDate ? '#4ade80' : '#f87171'
+                                      return (
+                                        <>
+                                          {'On '}
+                                          {parts.dayPrefix}
+                                          {', '}
+                                          <span
+                                            style={{
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              padding: '1px 5px',
+                                              borderRadius: '9999px',
+                                              background: pillBg,
+                                              border: pillBorder,
+                                              color: pillColor,
+                                              fontSize: '0.68rem',
+                                              fontWeight: 600,
+                                              letterSpacing: '0.01em',
+                                              lineHeight: '1.2',
+                                            }}
+                                          >
+                                            {parts.monthDay}
+                                          </span>
+                                          {', '}
+                                          {parts.rest}
+                                        </>
+                                      )
+                                    })()}
+                                  </span>
                                   {e.editHistory && e.editHistory.length > 0 ? (
                                     <button
                                       type="button"
@@ -1744,7 +1787,32 @@ export function QuickEntryModal({
                             </div>
                             <div className="quick-modal__item-meta">
                               <div className="qm-item__meta-time">
-                                <span>{formatDateTime(e.updatedAt || e.createdAt, timeFormat)}</span>
+                              <span style={{ fontWeight: 600 }}>
+                                {(() => {
+                                  const rawTs = formatDateTime(e.updatedAt || e.createdAt, timeFormat)
+                                  const parts = splitFormattedDateTime(rawTs)
+                                  if (!parts) return <>On {rawTs}</>
+                                  const targetDate = getEntryTargetDate(e)
+                                  const creationDateStr = extractDateOnly(e.createdAt)
+                                  const targetDateStr = targetDate ? extractDateOnly(targetDate) : null
+                                  const sameDate = targetDateStr ? creationDateStr === targetDateStr : true
+                                  const pillBg = sameDate ? 'rgba(34, 197, 94, 0.18)' : 'rgba(239, 68, 68, 0.18)'
+                                  const pillBorder = sameDate ? '1px solid rgba(34, 197, 94, 0.45)' : '1px solid rgba(239, 68, 68, 0.45)'
+                                  const pillColor = sameDate ? '#4ade80' : '#f87171'
+                                  return (
+                                    <>
+                                      {'On '}
+                                      {parts.dayPrefix}
+                                      {', '}
+                                      <span style={{ display: 'inline-flex', alignItems: 'center', padding: '1px 5px', borderRadius: '9999px', background: pillBg, border: pillBorder, color: pillColor, fontSize: '0.68rem', fontWeight: 600, letterSpacing: '0.01em', lineHeight: '1.2' }}>
+                                        {parts.monthDay}
+                                      </span>
+                                      {', '}
+                                      {parts.rest}
+                                    </>
+                                  )
+                                })()}
+                              </span>
                                 {e.editHistory && e.editHistory.length > 0 ? (
                                   <button
                                     type="button"

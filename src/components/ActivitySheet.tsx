@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
-import { formatDateTime, formatMonthDay, getBackdatedClass, getEntryTargetDate } from '../dateUtils'
+import { formatDateTime, formatMonthDay, getBackdatedClass, getEntryTargetDate, splitFormattedDateTime, extractDateOnly } from '../dateUtils'
 import type { ActivityLogItem, EntrySnapshot, Expense, IncomeEntry } from '../types'
 import type { Category } from '../categories'
 
@@ -181,8 +181,30 @@ export function ActivitySheet({
                     >
                       <div className="edit-history__item-top">
                         <div className="activity-item__meta-left">
-                          <span className="edit-history__item-time">
-                            {formatDateTime(item.timestamp, timeFormat)}
+                          <span className="edit-history__item-time" style={{ fontWeight: 600 }}>
+                            {(() => {
+                              const rawTs = formatDateTime(item.timestamp, timeFormat)
+                              const parts = splitFormattedDateTime(rawTs)
+                              if (!parts) return <>On {rawTs}</>
+                              const creationDateStr = extractDateOnly(item.timestamp)
+                              const targetDateStr = targetDate ? extractDateOnly(targetDate) : null
+                              const sameDate = targetDateStr ? creationDateStr === targetDateStr : true
+                              const pillBg = sameDate ? 'rgba(34, 197, 94, 0.18)' : 'rgba(239, 68, 68, 0.18)'
+                              const pillBorder = sameDate ? '1px solid rgba(34, 197, 94, 0.45)' : '1px solid rgba(239, 68, 68, 0.45)'
+                              const pillColor = sameDate ? '#4ade80' : '#f87171'
+                              return (
+                                <>
+                                  {'On '}
+                                  {parts.dayPrefix}
+                                  {', '}
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', padding: '1px 5px', borderRadius: '9999px', background: pillBg, border: pillBorder, color: pillColor, fontSize: '0.68rem', fontWeight: 600, letterSpacing: '0.01em', lineHeight: '1.2' }}>
+                                    {parts.monthDay}
+                                  </span>
+                                  {', '}
+                                  {parts.rest}
+                                </>
+                              )
+                            })()}
                           </span>
                           <span className="activity-item__added-tag">
                             <Plus size={10} strokeWidth={2.4} />
@@ -245,8 +267,30 @@ export function ActivitySheet({
                     >
                       <div className="edit-history__item-top">
                         <div className="activity-item__meta-left">
-                          <span className="edit-history__item-time">
-                            {formatDateTime(item.timestamp, timeFormat)}
+                          <span className="edit-history__item-time" style={{ fontWeight: 600 }}>
+                            {(() => {
+                              const rawTs = formatDateTime(item.timestamp, timeFormat)
+                              const parts = splitFormattedDateTime(rawTs)
+                              if (!parts) return <>On {rawTs}</>
+                              const creationDateStr = extractDateOnly(item.timestamp)
+                              const targetDateStr = targetDate ? extractDateOnly(targetDate) : null
+                              const sameDate = targetDateStr ? creationDateStr === targetDateStr : true
+                              const pillBg = sameDate ? 'rgba(34, 197, 94, 0.18)' : 'rgba(239, 68, 68, 0.18)'
+                              const pillBorder = sameDate ? '1px solid rgba(34, 197, 94, 0.45)' : '1px solid rgba(239, 68, 68, 0.45)'
+                              const pillColor = sameDate ? '#4ade80' : '#f87171'
+                              return (
+                                <>
+                                  {'On '}
+                                  {parts.dayPrefix}
+                                  {', '}
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', padding: '1px 5px', borderRadius: '9999px', background: pillBg, border: pillBorder, color: pillColor, fontSize: '0.68rem', fontWeight: 600, letterSpacing: '0.01em', lineHeight: '1.2' }}>
+                                    {parts.monthDay}
+                                  </span>
+                                  {', '}
+                                  {parts.rest}
+                                </>
+                              )
+                            })()}
                           </span>
                           <span className="activity-item__deleted-tag">
                             <Trash2 size={10} strokeWidth={2.4} />
@@ -312,8 +356,30 @@ export function ActivitySheet({
                   >
                     <div className="edit-history__item-top">
                       <div className="activity-item__meta-left">
-                        <span className="edit-history__item-time">
-                          {formatDateTime(item.timestamp, timeFormat)}
+                        <span className="edit-history__item-time" style={{ fontWeight: 600 }}>
+                          {(() => {
+                            const rawTs = formatDateTime(item.timestamp, timeFormat)
+                            const parts = splitFormattedDateTime(rawTs)
+                            if (!parts) return <>On {rawTs}</>
+                            const creationDateStr = extractDateOnly(item.timestamp)
+                            const targetDateStr = targetDate ? extractDateOnly(targetDate) : null
+                            const sameDate = targetDateStr ? creationDateStr === targetDateStr : true
+                            const pillBg = sameDate ? 'rgba(34, 197, 94, 0.18)' : 'rgba(239, 68, 68, 0.18)'
+                            const pillBorder = sameDate ? '1px solid rgba(34, 197, 94, 0.45)' : '1px solid rgba(239, 68, 68, 0.45)'
+                            const pillColor = sameDate ? '#4ade80' : '#f87171'
+                            return (
+                              <>
+                                {'On '}
+                                {parts.dayPrefix}
+                                {', '}
+                                <span style={{ display: 'inline-flex', alignItems: 'center', padding: '1px 5px', borderRadius: '9999px', background: pillBg, border: pillBorder, color: pillColor, fontSize: '0.68rem', fontWeight: 600, letterSpacing: '0.01em', lineHeight: '1.2' }}>
+                                  {parts.monthDay}
+                                </span>
+                                {', '}
+                                {parts.rest}
+                              </>
+                            )
+                          })()}
                         </span>
                         <button
                           type="button"
