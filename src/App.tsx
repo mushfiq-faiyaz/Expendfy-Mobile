@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Plus } from 'lucide-react'
 import { Calendar } from './components/Calendar'
 import { ExpenseSheet } from './components/ExpenseSheet'
 import { Header } from './components/Header'
@@ -431,6 +432,18 @@ export default function App() {
 
   function handleDoubleTapDate(dateIso: string): void {
     setSelectedDate(dateIso)
+    setQuickEntryOpen(true)
+  }
+
+  function handleQuickAdd(): void {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(10)
+      } catch {
+        // Ignore if unsupported or blocked by browser policy
+      }
+    }
+    setSelectedDate(todayIso)
     setQuickEntryOpen(true)
   }
 
@@ -905,6 +918,18 @@ export default function App() {
       />
 
       <main className="app-main">
+        <div className="calendar-action-bar">
+          <button
+            type="button"
+            className="calendar-quick-add-btn"
+            onClick={handleQuickAdd}
+            aria-label="Add entry"
+            title="Add entry"
+          >
+            <Plus size={18} strokeWidth={1.8} />
+          </button>
+        </div>
+
         <Calendar
           year={viewYear}
           monthIndex={viewMonth}
