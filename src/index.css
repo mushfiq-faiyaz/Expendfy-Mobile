@@ -319,7 +319,7 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: clamp(12px, 2.5vh, 24px) 6px clamp(24px, 4vh, 36px);
+  padding: 8px 6px clamp(24px, 4vh, 36px);
   min-height: 0;
   position: relative;
 }
@@ -330,8 +330,8 @@ body {
   align-items: center;
   justify-content: flex-end;
   width: 100%;
-  padding: 0 6px;
-  margin-bottom: clamp(2px, 0.8vh, 6px);
+  padding: 2px 6px;
+  margin-bottom: 8px;
   flex-shrink: 0;
 }
 
@@ -389,9 +389,8 @@ body {
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  gap: clamp(8px, 1.8vh, 16px);
-  /* Push calendar lower on screen to use dead space */
-  padding-top: clamp(8px, 2.5vh, 28px);
+  gap: clamp(6px, 1.5vh, 12px);
+  padding-top: 0;
 }
 
 .calendar__nav {
@@ -771,9 +770,13 @@ body {
   .app-main {
     padding: 6px 4px 12px;
   }
+  .calendar-action-bar {
+    margin-bottom: 4px;
+    padding: 0 4px;
+  }
   .calendar {
     gap: 4px;
-    padding-top: 2px;
+    padding-top: 0;
   }
   .calendar__nav {
     margin-bottom: 2px;
