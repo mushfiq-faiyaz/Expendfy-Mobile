@@ -1,13 +1,18 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Check, SlidersHorizontal } from 'lucide-react'
 import {
   daysInMonth,
+  extractDateOnly,
   formatCompactAmount,
+  isDateMismatch,
   monthYearLabel,
   parseISODate,
   toISODate,
   weekdayIndexFirstOfMonth,
 } from '../dateUtils'
+import { CalendarCell } from './CalendarCell'
+import type { BackdatedMismatch } from './BackdatedBadge'
+import type { CalendarEntry } from '../types'
 
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
 
@@ -32,6 +37,7 @@ type Props = {
   onSelectDate: (iso: string) => void
   onDoubleTapDate: (iso: string) => void
   onAddEntry?: () => void
+  entries?: CalendarEntry[]
 }
 
 export function Calendar({
@@ -46,6 +52,7 @@ export function Calendar({
   onMonthChange,
   onSelectDate,
   onDoubleTapDate,
+  entries,
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null)
   const weekdayRowRef = useRef<HTMLDivElement>(null)
@@ -170,6 +177,26 @@ export function Calendar({
 
   const colTemplate = `repeat(7, ${cellPx}px)`
   const rowTemplate = `repeat(${rowCount}, ${cellPx}px)`
+  const backdatedByDate = useMemo(() => {
+    if (!entries || entries.length === 0) return {}
+    const map: Record<string, BackdatedMismatch[]> = {}
+    for (const entry of entries) {
+      const targetIso = entry.targetDate || entry.date
+      if (!targetIso || !entry.createdAt) continue
+      if (isDateMismatch(targetIso, entry.createdAt)) {
+        const key = extractDateOnly(targetIso)
+        if (!map[key]) {
+          map[key] = []
+        }
+        map[key].push({
+          targetDate: key,
+          createdAt: entry.createdAt,
+        })
+      }
+    }
+    return map
+  }, [entries])
+
   const blockWidth = 7 * cellPx + 6 * WEEKDAY_GRID_GAP_PX
 
   const isEmptyDay = !spendByDate[selectedDate] && selectedDate <= todayDateIso
@@ -179,18 +206,21 @@ export function Calendar({
     onMonthChange(d.getFullYear(), d.getMonth())
   }
 
-  function handleCellTap(iso: string, now: number): void {
-    const prev = lastTapRef.current
-    // Double-tap opens quick entry for today or any past date (not future)
-    const isFuture = iso > todayDateIso
-    if (!isFuture && prev && prev.iso === iso && now - prev.ts <= 300) {
-      lastTapRef.current = null
-      onDoubleTapDate(iso)
-      return
-    }
-    lastTapRef.current = { iso, ts: now }
-    onSelectDate(iso)
-  }
+  const handleCellTap = useCallback(
+    (iso: string, now: number): void => {
+      const prev = lastTapRef.current
+      // Double-tap opens quick entry for today or any past date (not future)
+      const isFuture = iso > todayDateIso
+      if (!isFuture && prev && prev.iso === iso && now - prev.ts <= 300) {
+        lastTapRef.current = null
+        onDoubleTapDate(iso)
+        return
+      }
+      lastTapRef.current = { iso, ts: now }
+      onSelectDate(iso)
+    },
+    [todayDateIso, onDoubleTapDate, onSelectDate],
+  )
 
   return (
     <div className="calendar">
@@ -310,50 +340,25 @@ export function Calendar({
             const showRemain = hasInput && (displayMode === 'both' || displayMode === 'remain')
 
             return (
-              <button
+              <CalendarCell
                 key={iso}
-                type="button"
-                className={[
-                  'calendar__cell',
-                  !inCurrentMonth && 'calendar__cell--otherMonth',
-                  hasInput && 'calendar__cell--has-spend',
-                  hasIncome && 'calendar__cell--has-income',
-                  isHighestSpend && 'calendar__cell--highest-spend',
-                  isToday && 'calendar__cell--today',
-                  isSelected && 'calendar__cell--selected',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                style={
-                  hasInput && !isToday
-                    ? ({ '--spend-intensity': spendIntensity } as React.CSSProperties)
-                    : undefined
-                }
-                onClick={(e) => handleCellTap(iso, e.timeStamp)}
-              >
-                <span className="calendar__day-num">{day}</span>
-                {hasInput && (showSpent || showRemain) && (
-                  <div className="calendar__cell-amounts">
-                    {showSpent && (
-                      <span className="calendar__day-amount calendar__day-amount--spent">
-                        {spentDisplay}
-                      </span>
-                    )}
-                    {showRemain && (
-                      <span
-                        className={[
-                          'calendar__day-amount',
-                          isOver ? 'calendar__day-amount--over' : 'calendar__day-amount--remain',
-                        ]
-                          .filter(Boolean)
-                          .join(' ')}
-                      >
-                        {remainDisplay}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </button>
+                iso={iso}
+                day={day}
+                inCurrentMonth={inCurrentMonth}
+                hasInput={hasInput}
+                isToday={isToday}
+                isSelected={isSelected}
+                isOver={isOver}
+                hasIncome={hasIncome}
+                isHighestSpend={isHighestSpend}
+                spendIntensity={spendIntensity}
+                spentDisplay={spentDisplay}
+                remainDisplay={remainDisplay}
+                showSpent={showSpent}
+                showRemain={showRemain}
+                mismatches={backdatedByDate[iso]}
+                onTap={handleCellTap}
+              />
             )
           })}
         </div>

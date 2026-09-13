@@ -902,6 +902,7 @@ export default function App() {
           onSelectDate={setSelectedDate}
           onDoubleTapDate={handleDoubleTapDate}
           onAddEntry={() => setQuickEntryOpen(true)}
+          entries={expenses}
         />
       </main>
 

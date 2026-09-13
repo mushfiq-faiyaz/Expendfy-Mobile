@@ -702,6 +702,101 @@ body {
   width: 100%;
 }
 
+/* ─── Backdated Badge & Popover ─────────────────────────────────── */
+.backdated-badge {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  margin: -3px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.backdated-badge__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background-color: #f59e0b;
+  box-shadow: 0 0 5px rgba(245, 158, 11, 0.65), 0 1px 2px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.backdated-badge:hover .backdated-badge__dot {
+  transform: scale(1.2);
+  background-color: #fbbf24;
+}
+
+.backdated-badge__clock {
+  width: 8px;
+  height: 8px;
+  color: #f59e0b;
+  filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.6));
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.backdated-badge:hover .backdated-badge__clock {
+  transform: scale(1.2);
+  color: #fbbf24;
+}
+
+.backdated-popover {
+  position: fixed;
+  z-index: 9999;
+  max-width: calc(100vw - 24px);
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  padding: 8px 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65), 0 2px 8px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  pointer-events: auto;
+  animation: backdatedPopoverFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+@keyframes backdatedPopoverFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.backdated-popover__content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.backdated-popover__line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: #e2e8f0;
+  white-space: nowrap;
+}
+
+.backdated-popover__icon {
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
 /* ─── Side Drawer ───────────────────────────────────────────────── */
 .drawer__backdrop {
   position: fixed;

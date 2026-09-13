@@ -8,11 +8,21 @@ export type EditHistoryItem = {
 export type Expense = {
   id: string
   date: string
+  targetDate?: string
   description: string
   amount: number
   createdAt: string
   updatedAt?: string
   editHistory?: EditHistoryItem[]
+}
+
+export type CalendarEntry = {
+  id?: string
+  targetDate?: string
+  date?: string
+  description?: string
+  amount?: number
+  createdAt: string
 }
 
 export type IncomeEntry = {

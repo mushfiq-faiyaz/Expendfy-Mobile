@@ -88,3 +88,31 @@ export function formatCompactAmount(
 
   return isPrefix ? `${symbol}${formattedNum}` : `${formattedNum} ${symbol}`
 }
+
+/** Formats date as 'MMM d', e.g. 'Sep 13' */
+export function formatMonthDay(dateOrIso: string | Date): string {
+  const d =
+    typeof dateOrIso === 'string'
+      ? dateOrIso.includes('T')
+        ? new Date(dateOrIso)
+        : parseISODate(dateOrIso)
+      : dateOrIso
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+/** Extracts local YYYY-MM-DD from ISO string or date-only string */
+export function extractDateOnly(dateOrIso: string): string {
+  if (!dateOrIso) return ''
+  if (dateOrIso.includes('T')) {
+    return toISODate(new Date(dateOrIso))
+  }
+  return dateOrIso.slice(0, 10)
+}
+
+/** Returns true if createdAt's local date differs from targetDate */
+export function isDateMismatch(targetDate: string, createdAt: string): boolean {
+  if (!targetDate || !createdAt) return false
+  const target = extractDateOnly(targetDate)
+  const created = extractDateOnly(createdAt)
+  return Boolean(target && created && target !== created)
+}
