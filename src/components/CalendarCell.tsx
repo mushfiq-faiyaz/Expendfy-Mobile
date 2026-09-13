@@ -1,5 +1,5 @@
 import React, { memo } from 'react'
-import { BackdatedBadge, type BackdatedMismatch } from './BackdatedBadge'
+import { DayCellBadges, type BadgeDescriptor } from './DayCellBadges'
 
 export interface CalendarCellProps {
   iso: string
@@ -16,7 +16,8 @@ export interface CalendarCellProps {
   remainDisplay: string
   showSpent: boolean
   showRemain: boolean
-  mismatches?: BackdatedMismatch[]
+  /** Pre-computed badge descriptors (empty array = no badges) */
+  badges: BadgeDescriptor[]
   onTap: (iso: string, timestamp: number) => void
 }
 
@@ -35,7 +36,7 @@ export const CalendarCell = memo(function CalendarCell({
   remainDisplay,
   showSpent,
   showRemain,
-  mismatches,
+  badges,
   onTap,
 }: CalendarCellProps) {
   return (
@@ -59,7 +60,8 @@ export const CalendarCell = memo(function CalendarCell({
       }
       onClick={(e) => onTap(iso, e.timeStamp)}
     >
-      <BackdatedBadge mismatches={mismatches} />
+      {/* Badge row — top-right, does not affect content layout */}
+      <DayCellBadges badges={badges} />
       <span className="calendar__day-num">{day}</span>
       {hasInput && (showSpent || showRemain) && (
         <div className="calendar__cell-amounts">

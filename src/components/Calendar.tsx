@@ -4,6 +4,7 @@ import {
   daysInMonth,
   extractDateOnly,
   formatCompactAmount,
+  formatMonthDay,
   isDateMismatch,
   monthYearLabel,
   parseISODate,
@@ -11,7 +12,7 @@ import {
   weekdayIndexFirstOfMonth,
 } from '../dateUtils'
 import { CalendarCell } from './CalendarCell'
-import type { BackdatedMismatch } from './BackdatedBadge'
+import type { BadgeDescriptor } from './DayCellBadges'
 import type { CalendarEntry } from '../types'
 
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
@@ -177,22 +178,65 @@ export function Calendar({
 
   const colTemplate = `repeat(7, ${cellPx}px)`
   const rowTemplate = `repeat(${rowCount}, ${cellPx}px)`
-  const backdatedByDate = useMemo(() => {
-    if (!entries || entries.length === 0) return {}
-    const map: Record<string, BackdatedMismatch[]> = {}
+  const badgesByDate = useMemo(() => {
+    if (!entries || entries.length === 0) return {} as Record<string, BadgeDescriptor[]>
+
+    // Collect raw data keyed by date
+    const backdatedLines: Record<string, Set<string>> = {}
+    const editedLines: Record<string, Set<string>> = {}
+
     for (const entry of entries) {
       const targetIso = entry.targetDate || entry.date
-      if (!targetIso || !entry.createdAt) continue
-      if (isDateMismatch(targetIso, entry.createdAt)) {
-        const key = extractDateOnly(targetIso)
-        if (!map[key]) {
-          map[key] = []
-        }
-        map[key].push({
-          targetDate: key,
-          createdAt: entry.createdAt,
-        })
+      if (!targetIso) continue
+      const key = extractDateOnly(targetIso)
+
+      // — backdated check —
+      if (entry.createdAt && isDateMismatch(targetIso, entry.createdAt)) {
+        if (!backdatedLines[key]) backdatedLines[key] = new Set()
+        const createdFmt = formatMonthDay(entry.createdAt)
+        const targetFmt = formatMonthDay(targetIso)
+        backdatedLines[key].add(`Logged on ${createdFmt} for ${targetFmt}`)
       }
+
+      // — edited check —
+      const hasBeenEdited = Boolean(
+        (entry.editHistory && entry.editHistory.length > 0) || entry.updatedAt,
+      )
+      if (hasBeenEdited) {
+        if (!editedLines[key]) editedLines[key] = new Set()
+        const timestamps: string[] = []
+        if (entry.editHistory && entry.editHistory.length > 0) {
+          for (const h of entry.editHistory) {
+            if (h.editedAt) timestamps.push(h.editedAt)
+          }
+        } else if (entry.updatedAt) {
+          timestamps.push(entry.updatedAt)
+        }
+        if (timestamps.length === 0) {
+          editedLines[key].add('Value edited')
+        } else {
+          for (const ts of timestamps) {
+            editedLines[key].add(`Value edited on ${formatMonthDay(ts)}`)
+          }
+        }
+      }
+    }
+
+    // Merge into BadgeDescriptor[] per day
+    const allKeys = new Set([
+      ...Object.keys(backdatedLines),
+      ...Object.keys(editedLines),
+    ])
+    const map: Record<string, BadgeDescriptor[]> = {}
+    for (const key of allKeys) {
+      const descs: BadgeDescriptor[] = []
+      if (backdatedLines[key] && backdatedLines[key].size > 0) {
+        descs.push({ type: 'backdated', lines: [...backdatedLines[key]] })
+      }
+      if (editedLines[key] && editedLines[key].size > 0) {
+        descs.push({ type: 'edited', lines: [...editedLines[key]] })
+      }
+      if (descs.length > 0) map[key] = descs
     }
     return map
   }, [entries])
@@ -356,7 +400,7 @@ export function Calendar({
                 remainDisplay={remainDisplay}
                 showSpent={showSpent}
                 showRemain={showRemain}
-                mismatches={backdatedByDate[iso]}
+                badges={badgesByDate[iso] ?? []}
                 onTap={handleCellTap}
               />
             )

@@ -23,6 +23,8 @@ export type CalendarEntry = {
   description?: string
   amount?: number
   createdAt: string
+  updatedAt?: string
+  editHistory?: EditHistoryItem[]
 }
 
 export type IncomeEntry = {

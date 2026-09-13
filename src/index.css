@@ -702,53 +702,105 @@ body {
   width: 100%;
 }
 
-/* ─── Backdated Badge & Popover ─────────────────────────────────── */
-.backdated-badge {
+/* ─── Day Cell Badge Row ─────────────────────────────────────────── */
+
+/*
+ * Container: absolutely pinned to top-right of the cell.
+ * Uses flexbox so multiple dots sit side-by-side with a small gap.
+ * `overflow: visible` so dots + their 3px tap-padding never clip the row.
+ * `pointer-events: none` on the row itself; individual dots re-enable it.
+ */
+.day-cell-badges {
   position: absolute;
-  top: 3px;
-  right: 3px;
+  top: 4px;
+  right: 4px;
   z-index: 5;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;  /* let clicks fall through to cell */
+}
+
+/* Amber — backdated entries pinned to top-right corner */
+.day-cell-badges--top-right {
+  top: 4px;
+  right: 4px;
+  bottom: auto;
+  left: auto;
+}
+
+/* Purple — edited entries pinned to top-left corner */
+.day-cell-badges--top-left {
+  top: 4px;
+  left: 4px;
+  bottom: auto;
+  right: auto;
+}
+
+.day-cell-badges--bottom-left {
+  bottom: 4px;
+  left: 4px;
+  top: auto;
+  right: auto;
+}
+
+/* ─── Individual interactive dot ──────────────────────────────────── */
+
+/*
+ * Shared base for every badge dot.
+ * The 3px padding creates a larger touch target without visually
+ * enlarging the dot. Negative margin compensates so the row doesn't
+ * grow — dots still measure only by their circle size in the layout.
+ */
+.day-cell-badge-dot {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 3px;
   margin: -3px;
   cursor: pointer;
+  pointer-events: auto;   /* re-enable on the dot itself */
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   outline: none;
+  flex-shrink: 0;
 }
 
-.backdated-badge__dot {
+/* The visible circle inside each dot */
+.day-cell-badge-dot__circle {
+  display: block;
   width: 7px;
   height: 7px;
   border-radius: 9999px;
-  background-color: #f59e0b;
-  box-shadow: 0 0 5px rgba(245, 158, 11, 0.65), 0 1px 2px rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.25);
   transition: transform 0.15s ease, background-color 0.15s ease;
   flex-shrink: 0;
 }
 
-.backdated-badge:hover .backdated-badge__dot {
+/* Amber — backdated entries */
+.day-cell-badge-dot--backdated .day-cell-badge-dot__circle {
+  background-color: #f59e0b;
+  box-shadow: 0 0 5px rgba(245, 158, 11, 0.65), 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.day-cell-badge-dot--backdated:hover .day-cell-badge-dot__circle {
   transform: scale(1.2);
   background-color: #fbbf24;
 }
 
-.backdated-badge__clock {
-  width: 8px;
-  height: 8px;
-  color: #f59e0b;
-  filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.6));
-  transition: transform 0.15s ease, color 0.15s ease;
+/* Purple — edited entries */
+.day-cell-badge-dot--edited .day-cell-badge-dot__circle {
+  background-color: #a855f7;
+  box-shadow: 0 0 5px rgba(168, 85, 247, 0.75), 0 1px 2px rgba(0, 0, 0, 0.4);
 }
-
-.backdated-badge:hover .backdated-badge__clock {
+.day-cell-badge-dot--edited:hover .day-cell-badge-dot__circle {
   transform: scale(1.2);
-  color: #fbbf24;
+  background-color: #c084fc;
 }
 
-.backdated-popover {
+/* ─── Shared tooltip / popover ─────────────────────────────────────── */
+
+.day-cell-badge-popover {
   position: fixed;
   z-index: 9999;
   max-width: calc(100vw - 24px);
@@ -760,28 +812,22 @@ body {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   pointer-events: auto;
-  animation: backdatedPopoverFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: dayCellBadgePopoverIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
 }
 
-@keyframes backdatedPopoverFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+@keyframes dayCellBadgePopoverIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
-.backdated-popover__content {
+.day-cell-badge-popover__content {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.backdated-popover__line {
+.day-cell-badge-popover__line {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -792,10 +838,16 @@ body {
   white-space: nowrap;
 }
 
-.backdated-popover__icon {
+/* Icon colour per badge type */
+.day-cell-badge-popover__icon--backdated {
   color: #f59e0b;
   flex-shrink: 0;
 }
+.day-cell-badge-popover__icon--edited {
+  color: #c084fc;
+  flex-shrink: 0;
+}
+
 
 /* ─── Side Drawer ───────────────────────────────────────────────── */
 .drawer__backdrop {

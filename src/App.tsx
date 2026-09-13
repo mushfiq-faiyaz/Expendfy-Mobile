@@ -35,7 +35,7 @@ import {
 } from './categories'
 import { daysInMonth, parseISODate, toISODate } from './dateUtils'
 import { useNotification } from './hooks/useNotification'
-import type { ActivityLogItem, CustomCategory, EditHistoryItem, EntrySnapshot, Expense, IncomeEntry } from './types'
+import type { ActivityLogItem, CalendarEntry, CustomCategory, EditHistoryItem, EntrySnapshot, Expense, IncomeEntry } from './types'
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
@@ -354,6 +354,22 @@ export default function App() {
     }
     return set
   }, [incomeEntries])
+
+  const allCalendarEntries = useMemo(() => {
+    const list: CalendarEntry[] = [...expenses]
+    for (const inc of incomeEntries) {
+      list.push({
+        id: inc.id,
+        date: toISODate(new Date(inc.createdAt)),
+        createdAt: inc.createdAt,
+        updatedAt: inc.updatedAt,
+        editHistory: inc.editHistory,
+        amount: inc.amount,
+        description: inc.description,
+      })
+    }
+    return list
+  }, [expenses, incomeEntries])
 
   const monthActivityLog = useMemo(() => {
     return activityLog.filter((item) => {
@@ -902,7 +918,7 @@ export default function App() {
           onSelectDate={setSelectedDate}
           onDoubleTapDate={handleDoubleTapDate}
           onAddEntry={() => setQuickEntryOpen(true)}
-          entries={expenses}
+          entries={allCalendarEntries}
         />
       </main>
 
