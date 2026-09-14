@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import { Plus } from 'lucide-react'
 import { Calendar } from './components/Calendar'
 import { ExpenseSheet } from './components/ExpenseSheet'
@@ -1092,6 +1093,7 @@ export default function App() {
           Install App
         </button>
       ) : null}
+      <Analytics />
     </div>
   )
 }
