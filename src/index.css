@@ -145,9 +145,6 @@ body {
   margin-bottom: 2px;
   line-height: 1.2;
 }
-.app-header__panel--left .app-header__panel-header {
-  padding: 0 6px;
-}
 
 .app-header__panel-title {
   margin: 0;
@@ -181,10 +178,7 @@ body {
   min-height: 18px;
 }
 .app-header__stat-row--avg {
-  margin-top: 1px;
-  padding: 2px 6px;
-  border: 1px solid transparent;
-  box-sizing: border-box;
+  /* Aligns identically with standard stat rows */
 }
 
 /* Mode-switch buttons (Today panel) — look like stat rows */
