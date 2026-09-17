@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Analytics } from '@vercel/analytics/react'
-import { Plus } from 'lucide-react'
+import { Info, Plus } from 'lucide-react'
 import { Calendar } from './components/Calendar'
 import { ExpenseSheet } from './components/ExpenseSheet'
 import { Header } from './components/Header'
 import { IncomeSheet } from './components/IncomeSheet'
 import { QuickEntryModal } from './components/QuickEntryModal'
+import { EntriesGlanceModal } from './components/EntriesGlanceModal'
 import { SideDrawer } from './components/SideDrawer'
 import { ActivitySheet } from './components/ActivitySheet'
 import { EditHistoryModal } from './components/EditHistoryModal'
@@ -36,6 +37,7 @@ import {
   parseEntryCategory,
 } from './categories'
 import { daysInMonth, monthYearLabel, parseISODate, toISODate } from './dateUtils'
+import { getNetworkNow, useNetworkTime } from './networkTime'
 import { useNotification } from './hooks/useNotification'
 import type { ActivityLogItem, CalendarEntry, CustomCategory, EditHistoryItem, EntrySnapshot, Expense, IncomeEntry } from './types'
 
@@ -91,8 +93,7 @@ function nextAutoLabel(
 export default function App() {
   useNotification()
 
-  const today = new Date()
-  const todayIso = toISODate(today)
+  const { now: today, nowMs, todayIso } = useNetworkTime(1000)
   const CURRENCY_KEY = 'expendfy_currency'
   const TIME_FORMAT_KEY = 'expendfy_time_format'
   const CURRENCY_OPTIONS = ['TRY', 'USD', 'EUR', 'GBP', 'INR', 'JPY', 'AED', 'BDT'] as const
@@ -254,9 +255,13 @@ export default function App() {
   )
 
 
-  const [viewYear, setViewYear] = useState(today.getFullYear())
-  const [viewMonth, setViewMonth] = useState(today.getMonth())
-  const [selectedDate, setSelectedDate] = useState(() => todayIso)
+  const [manualSelectedDate, setManualSelectedDate] = useState<string | null>(null)
+  const [manualViewYear, setManualViewYear] = useState<number | null>(null)
+  const [manualViewMonth, setManualViewMonth] = useState<number | null>(null)
+
+  const selectedDate = manualSelectedDate ?? todayIso
+  const viewYear = manualViewYear ?? today.getFullYear()
+  const viewMonth = manualViewMonth ?? today.getMonth()
 
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [monthActivityOpen, setMonthActivityOpen] = useState(false)
@@ -267,9 +272,9 @@ export default function App() {
   const [expenseSheetOpen, setExpenseSheetOpen] = useState(false)
   const [incomeSheetOpen, setIncomeSheetOpen] = useState(false)
   const [quickEntryOpen, setQuickEntryOpen] = useState(true)
+  const [entriesGlanceOpen, setEntriesGlanceOpen] = useState(false)
   const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null)
   const [installPromptDismissed, setInstallPromptDismissed] = useState(false)
-  const [nowMs, setNowMs] = useState(() => Date.now())
 
   const monthlySpent = useMemo(
     () => sumExpensesForMonth(expenses, viewYear, viewMonth),
@@ -381,8 +386,12 @@ export default function App() {
   }, [activityLog, viewYear, viewMonth])
 
   function handleMonthChange(y: number, m: number): void {
-    setViewYear(y)
-    setViewMonth(m)
+    setManualViewYear(y)
+    setManualViewMonth(m)
+  }
+
+  function handleSelectDate(date: string): void {
+    setManualSelectedDate(date)
   }
 
   function handleCurrencyChange(nextCurrency: string): void {
@@ -394,12 +403,6 @@ export default function App() {
     setTimeFormat(fmt)
     localStorage.setItem(TIME_FORMAT_KEY, fmt)
   }
-
-
-  useEffect(() => {
-    const id = window.setInterval(() => setNowMs(Date.now()), 1000)
-    return () => window.clearInterval(id)
-  }, [])
 
   useEffect(() => {
     const onBeforeInstallPrompt = (event: Event) => {
@@ -432,8 +435,19 @@ export default function App() {
   }
 
   function handleDoubleTapDate(dateIso: string): void {
-    setSelectedDate(dateIso)
+    setManualSelectedDate(dateIso)
     setQuickEntryOpen(true)
+  }
+
+  function handleOpenGlance(): void {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(10)
+      } catch {
+        // Ignore if unsupported or blocked by browser policy
+      }
+    }
+    setEntriesGlanceOpen(true)
   }
 
   function handleQuickAdd(): void {
@@ -444,13 +458,15 @@ export default function App() {
         // Ignore if unsupported or blocked by browser policy
       }
     }
-    setSelectedDate(todayIso)
+    setManualSelectedDate(null)
+    setManualViewYear(null)
+    setManualViewMonth(null)
     setQuickEntryOpen(true)
   }
 
   function addExpense(description: string, amount: number): void {
     const normalized = description.trim()
-    const nowIso = new Date().toISOString()
+    const nowIso = getNetworkNow().toISOString()
     const allExpenseCats = [
       ...EXPENSE_CATEGORIES,
       ...customExpenseCategories.map(customCategoryToCategory),
@@ -500,7 +516,7 @@ export default function App() {
 
   function updateExpense(id: string, description: string, amount: number): void {
     const normalized = description.trim()
-    const nowIso = new Date().toISOString()
+    const nowIso = getNetworkNow().toISOString()
     const allExpenseCats = [
       ...EXPENSE_CATEGORIES,
       ...customExpenseCategories.map(customCategoryToCategory),
@@ -587,7 +603,7 @@ export default function App() {
         ...customExpenseCategories.map(customCategoryToCategory),
       ]
       const parsed = parseEntryCategory(item.description, allExpenseCats)
-      const nowIso = new Date().toISOString()
+      const nowIso = getNetworkNow().toISOString()
       const snapshot: EntrySnapshot = {
         id: item.id,
         amount: item.amount,
@@ -620,7 +636,7 @@ export default function App() {
 
   function addIncome(description: string, amount: number): void {
     const normalized = description.trim()
-    const nowIso = new Date().toISOString()
+    const nowIso = getNetworkNow().toISOString()
     const allIncomeCats = [
       ...INCOME_CATEGORIES,
       ...customIncomeCategories.map(customCategoryToCategory),
@@ -668,7 +684,7 @@ export default function App() {
 
   function updateIncome(id: string, description: string, amount: number): void {
     const normalized = description.trim()
-    const nowIso = new Date().toISOString()
+    const nowIso = getNetworkNow().toISOString()
     const allIncomeCats = [
       ...INCOME_CATEGORIES,
       ...customIncomeCategories.map(customCategoryToCategory),
@@ -753,7 +769,7 @@ export default function App() {
         ...customIncomeCategories.map(customCategoryToCategory),
       ]
       const parsed = parseEntryCategory(item.description, allIncomeCats)
-      const nowIso = new Date().toISOString()
+      const nowIso = getNetworkNow().toISOString()
       const snapshot: EntrySnapshot = {
         id: item.id,
         amount: item.amount,
@@ -922,6 +938,15 @@ export default function App() {
         <div className="calendar-action-bar">
           <button
             type="button"
+            className="calendar-quick-info-btn"
+            onClick={handleOpenGlance}
+            aria-label="Glance past entries"
+            title="Glance past entries"
+          >
+            <Info size={17} strokeWidth={1.9} />
+          </button>
+          <button
+            type="button"
             className="calendar-quick-add-btn"
             onClick={handleQuickAdd}
             aria-label="Add entry"
@@ -941,10 +966,12 @@ export default function App() {
           statusMessage={selectedDateStatus}
           formatMoney={formatMoney}
           onMonthChange={handleMonthChange}
-          onSelectDate={setSelectedDate}
+          onSelectDate={handleSelectDate}
           onDoubleTapDate={handleDoubleTapDate}
           onAddEntry={() => setQuickEntryOpen(true)}
           entries={allCalendarEntries}
+          todayDate={today}
+          todayDateIso={todayIso}
         />
       </main>
 
@@ -1018,6 +1045,18 @@ export default function App() {
         onDelete={deleteIncome}
       />
 
+      <EntriesGlanceModal
+        open={entriesGlanceOpen}
+        onClose={() => setEntriesGlanceOpen(false)}
+        selectedDate={selectedDate}
+        viewYear={viewYear}
+        viewMonth={viewMonth}
+        expenses={expenses}
+        incomeEntries={incomeEntries}
+        expenseCategories={mergedExpenseCategories}
+        incomeCategories={mergedIncomeCategories}
+        formatMoney={formatMoney}
+      />
 
       <QuickEntryModal
         open={quickEntryOpen}

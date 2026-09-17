@@ -14,6 +14,7 @@ import {
 import { CalendarCell } from './CalendarCell'
 import type { BadgeDescriptor } from './DayCellBadges'
 import type { CalendarEntry } from '../types'
+import { getNetworkNow, getNetworkTodayIso } from '../networkTime'
 
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
 
@@ -39,6 +40,8 @@ type Props = {
   onDoubleTapDate: (iso: string) => void
   onAddEntry?: () => void
   entries?: CalendarEntry[]
+  todayDate?: Date
+  todayDateIso?: string
 }
 
 export function Calendar({
@@ -54,6 +57,8 @@ export function Calendar({
   onSelectDate,
   onDoubleTapDate,
   entries,
+  todayDate,
+  todayDateIso: propTodayDateIso,
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null)
   const weekdayRowRef = useRef<HTMLDivElement>(null)
@@ -109,11 +114,11 @@ export function Calendar({
 
   const firstDow = weekdayIndexFirstOfMonth(year, monthIndex)
   const dim = daysInMonth(year, monthIndex)
-  const today = new Date()
-  const todayDateIso = toISODate(today)
+  const today = todayDate ?? getNetworkNow()
+  const todayDateIso = propTodayDateIso ?? getNetworkTodayIso()
   const todayIso =
     today.getFullYear() === year && today.getMonth() === monthIndex
-      ? toISODate(today)
+      ? todayDateIso
       : null
 
   const totalCells = 42

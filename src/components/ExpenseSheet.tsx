@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Expense } from '../types'
-import { formatDateTime, formatDisplayDate, toISODate } from '../dateUtils'
+import { formatDateTime, formatDisplayDate } from '../dateUtils'
+import { getNetworkTodayIso } from '../networkTime'
 import { EXPENSE_CATEGORIES, type Category } from '../categories'
 import { TransactionCategoryDisplay } from './TransactionCategoryDisplay'
 
@@ -40,7 +41,7 @@ export function ExpenseSheet({
   const [editAmount, setEditAmount] = useState('')
 
   // Future dates are read-only; today and past dates are fully editable
-  const todayIso = toISODate(new Date())
+  const todayIso = getNetworkTodayIso()
   const locked = dateIso > todayIso
   const list = expenses.filter((e) => e.date === dateIso)
 

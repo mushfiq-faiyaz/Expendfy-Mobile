@@ -21,6 +21,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { ChevronDown, History, Minus, Pencil, Plus, Redo2, RotateCcw, Tag, Trash2, TriangleAlert, Undo2, X } from 'lucide-react'
 import { formatDateTime, formatDisplayDate, formatMonthDay, getBackdatedClass, getEntryTargetDate, isWithin24Hours, toISODate, splitFormattedDateTime, extractDateOnly } from '../dateUtils'
+import { getNetworkTodayIso } from '../networkTime'
 import type { ActivityLogItem, CustomCategory, Expense, IncomeEntry } from '../types'
 import {
   EXPENSE_CATEGORIES,
@@ -1086,7 +1087,7 @@ export function QuickEntryModal({
   }, [activityLog, dateIso])
 
   const activitySheetTitle = useMemo(() => {
-    const todayStr = toISODate(new Date())
+    const todayStr = getNetworkTodayIso()
     if (dateIso === todayStr) {
       return "Today's Activity"
     }
@@ -1300,7 +1301,7 @@ export function QuickEntryModal({
   const incomeMonthTotal = incomeForMonth.reduce((s, e) => s + e.amount, 0)
 
   // Future dates are read-only for expenses
-  const todayIso = toISODate(new Date())
+  const todayIso = getNetworkTodayIso()
   const isFutureDate = dateIso > todayIso
 
   const currentSideExistingNames =

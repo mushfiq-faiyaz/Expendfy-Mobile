@@ -1,3 +1,5 @@
+import { getNetworkNow, getNetworkTimeMs } from './networkTime'
+
 export function toISODate(d: Date): string {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -11,7 +13,7 @@ export function parseISODate(s: string): Date {
 }
 
 export function startOfToday(): Date {
-  const t = new Date()
+  const t = getNetworkNow()
   return new Date(t.getFullYear(), t.getMonth(), t.getDate())
 }
 
@@ -48,17 +50,19 @@ export function weekdayIndexFirstOfMonth(year: number, monthIndex: number): numb
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 
-export function hoursRemaining24h(createdAtISO: string): number {
+export function hoursRemaining24h(createdAtISO: string, currentMs?: number): number {
   const created = new Date(createdAtISO).getTime()
   if (Number.isNaN(created)) return 0
   const deadline = created + MS_PER_DAY
-  return Math.max(0, (deadline - Date.now()) / (60 * 60 * 1000))
+  const now = currentMs ?? getNetworkTimeMs()
+  return Math.max(0, (deadline - now) / (60 * 60 * 1000))
 }
 
-export function isWithin24Hours(createdAtISO: string): boolean {
+export function isWithin24Hours(createdAtISO: string, currentMs?: number): boolean {
   const created = new Date(createdAtISO).getTime()
   if (Number.isNaN(created)) return false
-  return Date.now() - created <= MS_PER_DAY
+  const now = currentMs ?? getNetworkTimeMs()
+  return now - created <= MS_PER_DAY
 }
 
 export function canEditIncome(createdAtISO: string): boolean {
