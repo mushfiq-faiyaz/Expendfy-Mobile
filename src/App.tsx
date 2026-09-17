@@ -948,6 +948,7 @@ export default function App() {
         viewMonth={viewMonth}
         formatMoney={formatMoney}
         onMenuClick={() => setDrawerOpen(true)}
+        timeFormat={timeFormat}
       />
 
       <main className="app-main">

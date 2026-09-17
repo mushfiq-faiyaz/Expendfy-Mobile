@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { ChevronDown, History } from 'lucide-react'
 import { getCurrencyInfo } from '../currencies'
 import { CurrencyPicker } from './CurrencyPicker'
-import { useNetworkTime } from '../networkTime'
 import type { ThemeMode } from '../types'
 
 type Props = {
@@ -31,17 +30,10 @@ export function SideDrawer({
   onThemeChange,
 }: Props) {
   const [currencyPickerOpen, setCurrencyPickerOpen] = useState(false)
-  const { now } = useNetworkTime(1000)
 
   if (!open) return null
 
   const activeCurrency = getCurrencyInfo(currency)
-  const formattedLiveTime = now.toLocaleTimeString(undefined, {
-    hour: timeFormat === '12h' ? 'numeric' : '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: timeFormat === '12h',
-  })
 
   return (
     <>
@@ -52,10 +44,6 @@ export function SideDrawer({
           <button type="button" className="drawer__close" onClick={onClose} aria-label="Close">
             ×
           </button>
-        </div>
-
-        <div className="drawer__live-time">
-          <span className="drawer__live-time-text">{formattedLiveTime}</span>
         </div>
 
         <div className="drawer__activity">

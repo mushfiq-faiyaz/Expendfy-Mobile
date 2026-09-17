@@ -1,4 +1,6 @@
+import { Clock } from 'lucide-react'
 import { ExpendfyLogo } from './ExpendfyLogo'
+import { useNetworkTime } from '../networkTime'
 
 type Props = {
   selectedDateLabel: string
@@ -12,6 +14,7 @@ type Props = {
   viewMonth: number
   formatMoney: (n: number) => string
   onMenuClick: () => void
+  timeFormat: '12h' | '24h'
 }
 
 const MONTH_NAMES = [
@@ -31,7 +34,16 @@ export function Header({
   viewMonth,
   formatMoney,
   onMenuClick,
+  timeFormat,
 }: Props) {
+  const { now } = useNetworkTime(1000)
+  const formattedLiveTime = now.toLocaleTimeString(undefined, {
+    hour: timeFormat === '12h' ? 'numeric' : '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: timeFormat === '12h',
+  })
+
   const monthLabel = `${MONTH_NAMES[viewMonth]} ${viewYear}`
   const netBalance = monthlyIncome - monthlySpent
   const netPositive = netBalance >= 0
@@ -49,6 +61,13 @@ export function Header({
           <ExpendfyLogo size={40} />
           <span className="app-header__title">Expendfy</span>
         </div>
+
+        {/* Live time pill */}
+        <div className="app-header__time-pill" aria-label="Live time">
+          <Clock size={11} strokeWidth={2.4} className="app-header__time-pill-icon" />
+          <span className="app-header__time-pill-text">{formattedLiveTime}</span>
+        </div>
+
         <button
           type="button"
           className="app-header__menu"

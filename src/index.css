@@ -308,6 +308,45 @@ body {
   transform: scale(0.94);
 }
 
+/* ── Live time pill ──────────────────────────────────────────────── */
+.app-header__time-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: 99px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(99, 165, 250, 0.28);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.06),
+    0 1px 4px rgba(0, 0, 0, 0.20);
+  /* Push it right — sits between brand (flex-grow: 0) and menu btn */
+  margin-left: auto;
+  flex-shrink: 0;
+  cursor: default;
+  user-select: none;
+}
+
+.app-header__time-pill-icon {
+  color: #60a5fa;
+  flex-shrink: 0;
+  /* Optical alignment */
+  position: relative;
+  top: 0.5px;
+}
+
+.app-header__time-pill-text {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #93c5fd;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 
 /* ─── Main + Calendar ───────────────────────────────────────────── */
 .app-main {
@@ -1101,20 +1140,6 @@ body {
   flex-direction: column;
   padding: 14px 14px 6px;
   gap: 8px;
-}
-
-.drawer__live-time {
-  padding: 12px 14px 0;
-  display: flex;
-  align-items: center;
-}
-
-.drawer__live-time-text {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  color: #60a5fa;
-  font-variant-numeric: tabular-nums;
 }
 
 .drawer__activity {
@@ -4428,6 +4453,23 @@ body {
 
 [data-theme="light"] .app-header__progress-label {
   color: #64748b;
+}
+
+/* ── Live time pill (light mode) ─────────────────────────────────── */
+[data-theme="light"] .app-header__time-pill {
+  background: rgba(219, 234, 254, 0.70);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.06),
+    0 1px 4px rgba(15, 23, 42, 0.06);
+}
+
+[data-theme="light"] .app-header__time-pill-icon {
+  color: #1d4ed8;
+}
+
+[data-theme="light"] .app-header__time-pill-text {
+  color: #1e40af;
 }
 
 /* ─── Calendar Top Action Bar Buttons ────────────────────────────── */
