@@ -8,6 +8,18 @@
     <meta name="theme-color" content="#0f0f0f" />
     <meta name="mobile-web-app-capable" content="yes" />
     <title>Expendfy</title>
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('expendfy_theme');
+          if (t === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+            var m = document.querySelector('meta[name="theme-color"]');
+            if (m) m.setAttribute('content', '#f8fafc');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -64,3 +64,5 @@ export type ActivityLogItem = {
   entrySnapshotAfter?: EntrySnapshot
   editHistory?: EditHistoryItem[]
 }
+
+export type ThemeMode = 'dark' | 'light'

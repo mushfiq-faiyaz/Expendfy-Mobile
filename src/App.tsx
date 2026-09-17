@@ -29,6 +29,8 @@ import {
   saveIncomeHiddenPresets,
   loadActivityLog,
   saveActivityLog,
+  loadTheme,
+  saveTheme,
 } from './storage'
 import {
   EXPENSE_CATEGORIES,
@@ -39,7 +41,7 @@ import {
 import { daysInMonth, monthYearLabel, parseISODate, toISODate } from './dateUtils'
 import { getNetworkNow, useNetworkTime } from './networkTime'
 import { useNotification } from './hooks/useNotification'
-import type { ActivityLogItem, CalendarEntry, CustomCategory, EditHistoryItem, EntrySnapshot, Expense, IncomeEntry } from './types'
+import type { ActivityLogItem, CalendarEntry, CustomCategory, EditHistoryItem, EntrySnapshot, Expense, IncomeEntry, ThemeMode } from './types'
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
@@ -253,6 +255,7 @@ export default function App() {
   const [timeFormat, setTimeFormat] = useState<'12h' | '24h'>(
     () => (localStorage.getItem(TIME_FORMAT_KEY) as '12h' | '24h') || '24h',
   )
+  const [theme, setTheme] = useState<ThemeMode>(() => loadTheme())
 
 
   const [manualSelectedDate, setManualSelectedDate] = useState<string | null>(null)
@@ -403,6 +406,19 @@ export default function App() {
     setTimeFormat(fmt)
     localStorage.setItem(TIME_FORMAT_KEY, fmt)
   }
+
+  function handleThemeChange(nextTheme: ThemeMode): void {
+    setTheme(nextTheme)
+    saveTheme(nextTheme)
+  }
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    const metaTheme = document.querySelector('meta[name="theme-color"]')
+    if (metaTheme) {
+      metaTheme.setAttribute('content', theme === 'light' ? '#f8fafc' : '#0f0f0f')
+    }
+  }, [theme])
 
   useEffect(() => {
     const onBeforeInstallPrompt = (event: Event) => {
@@ -984,6 +1000,8 @@ export default function App() {
         onCurrencyChange={handleCurrencyChange}
         timeFormat={timeFormat}
         onTimeFormatChange={handleTimeFormatChange}
+        theme={theme}
+        onThemeChange={handleThemeChange}
       />
 
       <ActivitySheet

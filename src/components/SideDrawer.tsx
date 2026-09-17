@@ -3,6 +3,7 @@ import { ChevronDown, History } from 'lucide-react'
 import { getCurrencyInfo } from '../currencies'
 import { CurrencyPicker } from './CurrencyPicker'
 import { useNetworkTime } from '../networkTime'
+import type { ThemeMode } from '../types'
 
 type Props = {
   open: boolean
@@ -13,6 +14,8 @@ type Props = {
   onCurrencyChange: (currency: string) => void
   timeFormat: '12h' | '24h'
   onTimeFormatChange: (fmt: '12h' | '24h') => void
+  theme: ThemeMode
+  onThemeChange: (theme: ThemeMode) => void
 }
 
 export function SideDrawer({
@@ -24,6 +27,8 @@ export function SideDrawer({
   onCurrencyChange,
   timeFormat,
   onTimeFormatChange,
+  theme,
+  onThemeChange,
 }: Props) {
   const [currencyPickerOpen, setCurrencyPickerOpen] = useState(false)
   const { now } = useNetworkTime(1000)
@@ -113,6 +118,26 @@ export function SideDrawer({
               onClick={() => onTimeFormatChange('24h')}
             >
               24h
+            </button>
+          </div>
+        </div>
+
+        <div className="drawer__appearance">
+          <span className="drawer__currency-label">Appearance</span>
+          <div className="drawer__time-toggle">
+            <button
+              type="button"
+              className={`drawer__time-btn${theme === 'dark' ? ' drawer__time-btn--active' : ''}`}
+              onClick={() => onThemeChange('dark')}
+            >
+              Dark
+            </button>
+            <button
+              type="button"
+              className={`drawer__time-btn${theme === 'light' ? ' drawer__time-btn--active' : ''}`}
+              onClick={() => onThemeChange('light')}
+            >
+              Light
             </button>
           </div>
         </div>

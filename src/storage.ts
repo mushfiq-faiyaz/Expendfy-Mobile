@@ -1,4 +1,6 @@
-import type { ActivityLogItem, CustomCategory, Expense, IncomeEntry } from './types'
+import type { ActivityLogItem, CustomCategory, Expense, IncomeEntry, ThemeMode } from './types'
+
+const THEME_KEY = 'expendfy_theme'
 
 const EXPENSES_KEY = 'expendfy_expenses'
 const INCOME_KEY = 'expendfy_income'
@@ -143,6 +145,24 @@ export function loadActivityLog(): ActivityLogItem[] {
 
 export function saveActivityLog(log: ActivityLogItem[]): void {
   localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(log))
+}
+
+export function loadTheme(): ThemeMode {
+  try {
+    const raw = localStorage.getItem(THEME_KEY)
+    if (raw === 'dark' || raw === 'light') return raw
+    return 'dark'
+  } catch {
+    return 'dark'
+  }
+}
+
+export function saveTheme(theme: ThemeMode): void {
+  try {
+    localStorage.setItem(THEME_KEY, theme)
+  } catch {
+    // Ignore storage errors
+  }
 }
 
 

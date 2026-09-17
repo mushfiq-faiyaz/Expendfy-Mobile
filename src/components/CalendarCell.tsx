@@ -46,10 +46,12 @@ export const CalendarCell = memo(function CalendarCell({
         'calendar__cell',
         !inCurrentMonth && 'calendar__cell--otherMonth',
         hasInput && 'calendar__cell--has-spend',
+        hasInput && (isOver ? 'calendar__cell--over' : 'calendar__cell--under'),
         hasIncome && 'calendar__cell--has-income',
         isHighestSpend && 'calendar__cell--highest-spend',
         isToday && 'calendar__cell--today',
         isSelected && 'calendar__cell--selected',
+        badges.length > 0 && 'calendar__cell--has-badges',
       ]
         .filter(Boolean)
         .join(' ')}

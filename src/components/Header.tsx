@@ -125,7 +125,11 @@ export function Header({
 
           <div className="app-header__stat-row">
             <span className="app-header__label">Balance</span>
-            <span className="app-header__value app-header__value--balance">
+            <span
+              className={`app-header__value app-header__value--balance ${
+                !netPositive ? 'app-header__value--balance-negative' : ''
+              }`}
+            >
               {netPositive ? '+' : ''}
               {formatMoney(netBalance)}
             </span>
