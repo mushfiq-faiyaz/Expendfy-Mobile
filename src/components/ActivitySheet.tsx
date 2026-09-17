@@ -7,6 +7,7 @@ import type { Category } from '../categories'
 type Props = {
   open: boolean
   title?: string
+  subtitle?: string
   activityLog: ActivityLogItem[]
   expenseCategories: Category[]
   incomeCategories: Category[]
@@ -56,6 +57,7 @@ function getEditSummary(
 export function ActivitySheet({
   open,
   title = 'Activity',
+  subtitle,
   activityLog,
   expenseCategories,
   incomeCategories,
@@ -121,9 +123,17 @@ export function ActivitySheet({
         <div className="cat-picker__header">
           <div className="edit-history__title-wrap">
             <h3 className="cat-picker__title">{title}</h3>
-            <span className="edit-history__count">
-              {sortedLog.length} event{sortedLog.length === 1 ? '' : 's'}
-            </span>
+            <div className="edit-history__meta">
+              {subtitle && (
+                <>
+                  <span className="edit-history__subtitle">{subtitle}</span>
+                  <span className="edit-history__dot">•</span>
+                </>
+              )}
+              <span className="edit-history__count">
+                {sortedLog.length} event{sortedLog.length === 1 ? '' : 's'}
+              </span>
+            </div>
           </div>
           <button
             type="button"

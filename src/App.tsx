@@ -35,7 +35,7 @@ import {
   customCategoryToCategory,
   parseEntryCategory,
 } from './categories'
-import { daysInMonth, parseISODate, toISODate } from './dateUtils'
+import { daysInMonth, monthYearLabel, parseISODate, toISODate } from './dateUtils'
 import { useNotification } from './hooks/useNotification'
 import type { ActivityLogItem, CalendarEntry, CustomCategory, EditHistoryItem, EntrySnapshot, Expense, IncomeEntry } from './types'
 
@@ -962,6 +962,7 @@ export default function App() {
       <ActivitySheet
         open={monthActivityOpen}
         title="Monthly Activity"
+        subtitle={monthYearLabel(viewYear, viewMonth)}
         activityLog={monthActivityLog}
         expenseCategories={mergedExpenseCategories}
         incomeCategories={mergedIncomeCategories}

@@ -2222,6 +2222,26 @@ body {
   gap: 2px;
 }
 
+.edit-history__meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.edit-history__subtitle {
+  font-size: 0.72rem;
+  color: #facc15;
+  font-weight: 600;
+}
+
+.edit-history__dot {
+  font-size: 0.65rem;
+  color: #64748b;
+  user-select: none;
+  line-height: 1;
+}
+
 .edit-history__count {
   font-size: 0.72rem;
   color: #64748b;
