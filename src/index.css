@@ -2126,10 +2126,17 @@ body {
 .qm-item__cat-row {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   min-width: 0;
   flex: 1;
-  overflow: hidden;
+}
+
+.qm-item__cat-row--with-note {
+  align-items: flex-start;
+}
+
+.qm-item__cat-row--with-note .qm-item__cat-icon {
+  margin-top: 2px;
 }
 
 .qm-item__cat-icon {
@@ -2143,30 +2150,42 @@ body {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
+.qm-item__cat-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  gap: 2px;
+}
+
 .qm-item__cat-label {
   font-weight: 600;
   font-size: 0.85rem;
   color: #f1f5f9;
+  line-height: 1.25;
   white-space: nowrap;
-  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .qm-item__cat-note {
   font-weight: 400;
-  font-size: 0.80rem;
+  font-size: 0.78rem;
   color: #94a3b8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .qm-item__desc-fallback {
   font-weight: 500;
   font-size: 0.85rem;
   color: #f1f5f9;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .entry-amount-col,
@@ -4371,7 +4390,7 @@ body {
 .entries-glance-top-row {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -4442,7 +4461,6 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  align-self: center;
 }
 
 .entries-glance-cat-name {
@@ -4455,6 +4473,19 @@ body {
   min-width: 0;
   margin: 0;
   padding: 0;
+  line-height: 1.25;
+}
+
+.entries-glance-desc {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: #94a3b8;
+  line-height: 1.38;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  padding-left: 34px;
+  margin-top: -1px;
 }
 
 /* ── Input timestamp: "Input on" label + vertically stacked time/date ── */
@@ -5591,6 +5622,18 @@ body {
   font-weight: 700;
 }
 
+[data-theme="light"] .qm-item__cat-label {
+  color: #0f172a;
+}
+
+[data-theme="light"] .qm-item__cat-note {
+  color: #64748b;
+}
+
+[data-theme="light"] .qm-item__desc-fallback {
+  color: #0f172a;
+}
+
 [data-theme="light"] .qm-item__meta-time {
   color: #64748b;
 }
@@ -6038,6 +6081,10 @@ body {
 
 [data-theme="light"] .entries-glance-cat-name {
   color: #0f172a;
+}
+
+[data-theme="light"] .entries-glance-desc {
+  color: #64748b;
 }
 
 [data-theme="light"] .eg-input-label {

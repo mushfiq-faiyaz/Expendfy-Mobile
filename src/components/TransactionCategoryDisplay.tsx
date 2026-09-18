@@ -10,13 +10,17 @@ export function TransactionCategoryDisplay({
   const { category, note } = parseEntryCategory(description, categories)
 
   if (!category) {
-    return <span className="qm-item__desc-fallback">{description || '—'}</span>
+    return (
+      <div className="qm-item__cat-row">
+        <span className="qm-item__desc-fallback">{description || '—'}</span>
+      </div>
+    )
   }
 
   const IconComp = category.Icon
 
   return (
-    <div className="qm-item__cat-row">
+    <div className={`qm-item__cat-row${note ? ' qm-item__cat-row--with-note' : ''}`}>
       <span
         className="qm-item__cat-icon"
         style={{
@@ -28,8 +32,10 @@ export function TransactionCategoryDisplay({
       >
         <IconComp size={13} strokeWidth={2.2} />
       </span>
-      <span className="qm-item__cat-label">{category.label}</span>
-      {note ? <span className="qm-item__cat-note">• {note}</span> : null}
+      <div className="qm-item__cat-details">
+        <span className="qm-item__cat-label">{category.label}</span>
+        {note ? <span className="qm-item__cat-note">{note}</span> : null}
+      </div>
     </div>
   )
 }

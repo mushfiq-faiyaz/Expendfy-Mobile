@@ -94,6 +94,7 @@ interface UnifiedEntry {
   categoryColor: string
   categoryBg: string
   categoryBorder: string
+  note?: string
   timestamp: string
   createdAt?: string
   isWrongDay: boolean
@@ -217,6 +218,7 @@ export function EntriesGlanceModal({
         categoryColor: cat ? cat.color : '#f87171',
         categoryBg: cat ? cat.bg : 'rgba(248,113,113,0.13)',
         categoryBorder: cat ? cat.border : 'rgba(248,113,113,0.22)',
+        note: parsed.note || (cat ? '' : exp.description),
         timestamp: exp.createdAt || exp.date,
         createdAt: exp.createdAt,
         isWrongDay,
@@ -240,6 +242,7 @@ export function EntriesGlanceModal({
         categoryColor: cat ? cat.color : '#4ade80',
         categoryBg: cat ? cat.bg : 'rgba(74,222,128,0.13)',
         categoryBorder: cat ? cat.border : 'rgba(74,222,128,0.22)',
+        note: parsed.note || (cat ? '' : inc.description),
         timestamp: inc.createdAt,
         createdAt: inc.createdAt,
         isWrongDay,
@@ -736,6 +739,9 @@ function EntryRow({
         </span>
         <span className="entries-glance-cat-name">{item.categoryLabel}</span>
       </div>
+
+      {/* Description text right below the title row */}
+      {item.note ? <div className="entries-glance-desc">{item.note}</div> : null}
 
       {/* Row 2: badge | Input on + stacked time/date | date chip | amount */}
       <div className="entries-glance-bottom-row">
