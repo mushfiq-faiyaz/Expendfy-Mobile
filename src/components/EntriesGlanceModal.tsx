@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowDownLeft, ArrowUpRight, ArrowUpDown, CalendarDays, Check, Clock, HelpCircle, X } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, ArrowUpDown, CalendarDays, Check, ChevronUp, Clock, HelpCircle, X } from 'lucide-react'
 import { formatDisplayDate, formatMonthDay, isBackdated, monthYearLabel, toISODate } from '../dateUtils'
 import { parseEntryCategory, type Category } from '../categories'
 import type { Expense, IncomeEntry } from '../types'
@@ -10,6 +10,60 @@ import { GROUP_COLORS } from '../App'
 type ScopeFilter = 'date' | 'month' | 'year' | 'selection'
 type TypeFilter = 'all' | 'expense' | 'income'
 type SortOption = 'time-desc' | 'time-asc' | 'amount-asc' | 'amount-desc'
+
+type StatKey =
+  | 'totalSpent'
+  | 'totalIncome'
+  | 'avgPerDay'
+  | 'avgPerTransaction'
+  | 'highestExpense'
+  | 'highestIncome'
+  | 'numTransactions'
+  | 'net'
+
+const STAT_DEFS: { key: StatKey; label: string }[] = [
+  { key: 'totalSpent',        label: 'Total Spent' },
+  { key: 'totalIncome',       label: 'Total Income' },
+  { key: 'avgPerDay',         label: 'Avg/Day' },
+  { key: 'avgPerTransaction', label: 'Avg/Transaction' },
+  { key: 'highestExpense',    label: 'Highest Expense' },
+  { key: 'highestIncome',     label: 'Highest Income' },
+  { key: 'numTransactions',   label: '# Transactions' },
+  { key: 'net',               label: 'Net' },
+]
+
+function getDaysInScope(
+  scope: ScopeFilter,
+  viewYear: number,
+  viewMonth: number,
+  selectionGroups: import('../App').SelectionGroup[],
+): number {
+  if (scope === 'date') return 1
+  if (scope === 'selection') {
+    const allDates = new Set<string>()
+    for (const g of selectionGroups) {
+      for (const d of g.dates) allDates.add(d)
+    }
+    return Math.max(allDates.size, 1)
+  }
+  const today = new Date()
+  if (scope === 'month') {
+    if (viewYear === today.getFullYear() && viewMonth === today.getMonth()) {
+      return today.getDate()
+    }
+    return new Date(viewYear, viewMonth + 1, 0).getDate()
+  }
+  if (scope === 'year') {
+    if (viewYear === today.getFullYear()) {
+      const start = new Date(viewYear, 0, 1)
+      return Math.round((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
+    }
+    const isLeap = (viewYear % 4 === 0 && viewYear % 100 !== 0) || viewYear % 400 === 0
+    return isLeap ? 366 : 365
+  }
+  return 1
+}
+
 
 function formatInputTimeParts(
   createdAtIso: string,
@@ -86,6 +140,22 @@ export function EntriesGlanceModal({
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false)
   const sortBtnRef = useRef<HTMLButtonElement>(null)
   const sortDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Stats panel state
+  const [statsOpen, setStatsOpen] = useState(false)
+  const [enabledStats, setEnabledStats] = useState<Set<StatKey>>(
+    () => new Set<StatKey>(['totalSpent', 'totalIncome'])
+  )
+
+  const toggleStat = (key: StatKey) => {
+    setEnabledStats((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
 
   // Auto-switch to selection tab when modal opens with active selection
   useEffect(() => {
@@ -275,6 +345,27 @@ export function EntriesGlanceModal({
     }
     return { totalExpense, totalIncome }
   }, [groupedEntries])
+
+  // Advanced stats for the configurable footer bar
+  const advancedStats = useMemo(() => {
+    const entries =
+      scope === 'selection' ? groupedEntries.flatMap((g) => g.entries) : filteredEntries
+    const expEntries = entries.filter((e) => e.type === 'expense')
+    const incEntries = entries.filter((e) => e.type === 'income')
+    const totalExpense = scope === 'selection' ? selectionSummary.totalExpense : summary.totalExpense
+    const totalIncome  = scope === 'selection' ? selectionSummary.totalIncome  : summary.totalIncome
+    const days = getDaysInScope(scope, viewYear, viewMonth, selectionGroups)
+    return {
+      totalSpent:        totalExpense,
+      totalIncome,
+      avgPerDay:         days > 0 ? totalExpense / days : 0,
+      avgPerTransaction: expEntries.length > 0 ? totalExpense / expEntries.length : 0,
+      highestExpense:    expEntries.length > 0 ? Math.max(...expEntries.map((e) => e.amount)) : 0,
+      highestIncome:     incEntries.length > 0 ? Math.max(...incEntries.map((e) => e.amount)) : 0,
+      numTransactions:   entries.length,
+      net:               totalIncome - totalExpense,
+    }
+  }, [scope, filteredEntries, groupedEntries, selectionSummary, summary, viewYear, viewMonth, selectionGroups])
 
   // Subtitle string
   const subtitleText = useMemo(() => {
@@ -530,21 +621,74 @@ export function EntriesGlanceModal({
           )}
         </div>
 
-        {/* Footer Summary */}
+        {/* Footer — Stats panel + configurable bottom bar */}
         <div className="entries-glance-footer">
-          <div className="entries-glance-footer-stat">
-            <span className="entries-glance-footer-label">Total Spent:</span>
-            <span className="entries-glance-footer-val entries-glance-footer-val--expense">
-              {formatMoney(scope === 'selection' ? selectionSummary.totalExpense : summary.totalExpense)}
-            </span>
-          </div>
-          <div className="entries-glance-footer-stat">
-            <span className="entries-glance-footer-label">Total Income:</span>
-            <span className="entries-glance-footer-val entries-glance-footer-val--income">
-              {formatMoney(scope === 'selection' ? selectionSummary.totalIncome : summary.totalIncome)}
-            </span>
+
+          {/* ── Collapsible stats checklist panel ── */}
+          {statsOpen && (
+            <div className="eg-stats-panel" role="region" aria-label="Stats options">
+              <div className="eg-stats-panel-grid">
+                {STAT_DEFS.map(({ key, label }) => {
+                  const checked = enabledStats.has(key)
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      className={`eg-stats-item${checked ? ' eg-stats-item--checked' : ''}`}
+                      onClick={() => toggleStat(key)}
+                      aria-pressed={checked}
+                    >
+                      <span className="eg-stats-item__checkbox" aria-hidden="true">
+                        {checked && <Check size={9} strokeWidth={3.2} />}
+                      </span>
+                      <span className="eg-stats-item__label">{label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── Bottom bar: active stat pills + toggle ── */}
+          <div className="eg-footer-bar">
+            <div className="eg-footer-pills">
+              {STAT_DEFS.filter(({ key }) => enabledStats.has(key)).map(({ key, label }) => {
+                const raw = advancedStats[key]
+                const isCount = key === 'numTransactions'
+                const isNet   = key === 'net'
+                const val = isCount
+                  ? String(raw)
+                  : formatMoney(Math.abs(raw as number))
+                const prefix = isNet && (raw as number) >= 0 ? '+' : isNet ? '-' : ''
+                let pillMod = 'eg-footer-pill--neutral'
+                if (key === 'totalSpent' || key === 'avgPerDay' || key === 'avgPerTransaction' || key === 'highestExpense') {
+                  pillMod = 'eg-footer-pill--expense'
+                } else if (key === 'totalIncome' || key === 'highestIncome') {
+                  pillMod = 'eg-footer-pill--income'
+                } else if (key === 'net') {
+                  pillMod = (raw as number) >= 0 ? 'eg-footer-pill--income' : 'eg-footer-pill--expense'
+                }
+                return (
+                  <div key={key} className={`eg-footer-pill ${pillMod}`}>
+                    <span className="eg-footer-pill__label">{label}:</span>
+                    <span className="eg-footer-pill__val">{prefix}{val}</span>
+                  </div>
+                )
+              })}
+            </div>
+
+            <button
+              type="button"
+              className={`eg-stats-toggle-btn${statsOpen ? ' eg-stats-toggle-btn--open' : ''}`}
+              onClick={() => setStatsOpen((v) => !v)}
+              aria-label={statsOpen ? 'Collapse stats options' : 'Expand stats options'}
+              aria-expanded={statsOpen}
+            >
+              <ChevronUp size={14} strokeWidth={2.5} />
+            </button>
           </div>
         </div>
+
       </div>
     </div>,
     document.body,
