@@ -1153,6 +1153,7 @@ export default function App() {
         expenseCategories={mergedExpenseCategories}
         incomeCategories={mergedIncomeCategories}
         formatMoney={formatMoney}
+        timeFormat={timeFormat}
         selectMode={selectMode}
         selectionGroups={selectionGroups}
       />

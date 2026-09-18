@@ -34,6 +34,7 @@ interface Props {
   expenseCategories: Category[]
   incomeCategories: Category[]
   formatMoney: (n: number) => string
+  timeFormat: '12h' | '24h'
   selectMode?: boolean
   selectionGroups?: SelectionGroup[]
 }
@@ -49,6 +50,7 @@ export function EntriesGlanceModal({
   expenseCategories,
   incomeCategories,
   formatMoney,
+  timeFormat,
   selectMode = false,
   selectionGroups = [],
 }: Props) {
@@ -339,7 +341,7 @@ export function EntriesGlanceModal({
               ) : (
                 <ul className="entries-glance-list">
                   {groupedEntries[0].entries.map((item) => (
-                    <EntryRow key={item.id} item={item} showDate formatMoney={formatMoney} />
+                    <EntryRow key={item.id} item={item} showDate formatMoney={formatMoney} timeFormat={timeFormat} />
                   ))}
                 </ul>
               )
@@ -374,7 +376,7 @@ export function EntriesGlanceModal({
                       ) : (
                         <ul className="entries-glance-list entries-glance-list--grouped">
                           {g.entries.map((item) => (
-                            <EntryRow key={item.id} item={item} showDate formatMoney={formatMoney} />
+                            <EntryRow key={item.id} item={item} showDate formatMoney={formatMoney} timeFormat={timeFormat} />
                           ))}
                         </ul>
                       )}
@@ -398,6 +400,7 @@ export function EntriesGlanceModal({
                       item={item}
                       showDate={scope !== 'date'}
                       formatMoney={formatMoney}
+                      timeFormat={timeFormat}
                     />
                   )
                 })}
@@ -432,6 +435,7 @@ function EntryRow({
   item,
   showDate,
   formatMoney,
+  timeFormat,
 }: {
   item: {
     id: string
@@ -443,12 +447,26 @@ function EntryRow({
     categoryColor: string
     categoryBg: string
     categoryBorder: string
+    timestamp: string
   }
   showDate: boolean
   formatMoney: (n: number) => string
+  timeFormat: '12h' | '24h'
 }) {
   const IconComponent = item.categoryIcon
   const isExpense = item.type === 'expense'
+
+  // Format time from timestamp
+  const timeLabel = (() => {
+    if (!item.timestamp) return null
+    const t = new Date(item.timestamp)
+    if (Number.isNaN(t.getTime())) return null
+    return t.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: timeFormat === '12h',
+    })
+  })()
 
   return (
     <li className="entries-glance-item">
@@ -496,11 +514,22 @@ function EntryRow({
         </div>
       </div>
 
-      {/* Right: Date (if broader scope) & Amount */}
+      {/* Right: Date + Time badges & Amount */}
       <div className="entries-glance-item-right">
-        {showDate && item.dateIso && (
-          <span className="entries-glance-item-date">{item.dateIso}</span>
-        )}
+        <div className="eg-meta-pills">
+          {showDate && item.dateIso && (() => {
+            const d = new Date(item.dateIso + 'T12:00:00')
+            const thisYear = new Date().getFullYear()
+            const entryYear = d.getFullYear()
+            const day = d.getDate()
+            const mon = d.toLocaleDateString('en-US', { month: 'short' })
+            const label = entryYear === thisYear
+              ? `${day} ${mon}`
+              : `${day} ${mon} '${String(entryYear).slice(2)}`
+            return <span className="eg-date-pill">{label}</span>
+          })()}
+          {timeLabel && <span className="eg-time-pill">{timeLabel}</span>}
+        </div>
         <span
           className={`entries-glance-amount ${
             isExpense
