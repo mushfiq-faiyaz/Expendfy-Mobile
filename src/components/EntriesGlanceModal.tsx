@@ -7,7 +7,7 @@ import type { Expense, IncomeEntry } from '../types'
 import type { SelectionGroup } from '../App'
 import { GROUP_COLORS } from '../App'
 
-type ScopeFilter = 'date' | 'month' | 'all' | 'selection'
+type ScopeFilter = 'date' | 'month' | 'year' | 'selection'
 type TypeFilter = 'all' | 'expense' | 'income'
 
 interface UnifiedEntry {
@@ -146,6 +146,11 @@ export function EntriesGlanceModal({
         const d = new Date(item.dateIso + 'T12:00:00')
         return d.getFullYear() === viewYear && d.getMonth() === viewMonth
       }
+      if (scope === 'year') {
+        if (!item.dateIso) return false
+        const d = new Date(item.dateIso + 'T12:00:00')
+        return d.getFullYear() === viewYear
+      }
       return true
     })
   }, [unifiedEntries, scope, typeFilter, selectedDate, viewYear, viewMonth])
@@ -213,6 +218,7 @@ export function EntriesGlanceModal({
     }
     if (scope === 'date') return formatDisplayDate(selectedDate)
     if (scope === 'month') return monthYearLabel(viewYear, viewMonth)
+    if (scope === 'year') return String(viewYear)
     return 'All recorded entries'
   }, [scope, groupedEntries, selectedDate, viewYear, viewMonth])
 
@@ -271,11 +277,11 @@ export function EntriesGlanceModal({
             <button
               type="button"
               role="tab"
-              aria-selected={scope === 'all'}
-              className={`entries-glance-tab ${scope === 'all' ? 'entries-glance-tab--active' : ''}`}
-              onClick={() => setScope('all')}
+              aria-selected={scope === 'year'}
+              className={`entries-glance-tab ${scope === 'year' ? 'entries-glance-tab--active' : ''}`}
+              onClick={() => setScope('year')}
             >
-              All
+              This Year
             </button>
             {/* Selection tab — only shown while select mode is active */}
             {selectMode && (
