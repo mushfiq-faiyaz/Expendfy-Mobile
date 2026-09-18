@@ -2532,6 +2532,17 @@ body {
   border-color: rgba(239, 68, 68, 0.35);
 }
 
+.entries-glance-item.entry-item--backdated {
+  background: rgba(239, 68, 68, 0.09);
+  border-color: rgba(239, 68, 68, 0.25);
+  border-left: 3px solid #ef4444;
+}
+
+.entries-glance-item.entry-item--backdated:hover {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
 .edit-history__item.entry-item--backdated {
   background: rgba(239, 68, 68, 0.09);
   border-color: rgba(239, 68, 68, 0.25);
@@ -4418,6 +4429,69 @@ body {
   min-width: 0;
 }
 
+.entries-glance-cat-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+/* ── Input timestamp stacked boxes ── */
+.eg-input-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.eg-input-label {
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: #64748b;           /* neutral slate — overridden to red on --tinted */
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.eg-input-row--tinted .eg-input-label {
+  color: #fb923c;
+}
+
+.eg-input-stack {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.eg-input-time,
+.eg-input-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+  white-space: nowrap;
+  /* neutral — muted slate */
+  background: rgba(100, 116, 139, 0.08);
+  border: 1px solid rgba(100, 116, 139, 0.18);
+  color: #94a3b8;
+}
+
+/* amber/orange when input date ≠ transaction date */
+.eg-input-row--tinted .eg-input-time,
+.eg-input-row--tinted .eg-input-date {
+  background: rgba(251, 146, 60, 0.09);
+  border-color: rgba(251, 146, 60, 0.30);
+  color: #fb923c;
+}
+
+
+
 .entries-glance-item-right {
   display: flex;
   align-items: center;
@@ -4465,9 +4539,8 @@ body {
 
 .eg-meta-pills {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 3px;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
@@ -5747,9 +5820,43 @@ body {
   box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06);
 }
 
+[data-theme="light"] .entries-glance-item.entry-item--backdated {
+  background: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.25);
+  border-left: 3px solid #ef4444;
+}
+
+[data-theme="light"] .entries-glance-item.entry-item--backdated:hover {
+  background: rgba(239, 68, 68, 0.10);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
 [data-theme="light"] .entries-glance-cat-name {
   color: #0f172a;
 }
+
+[data-theme="light"] .eg-input-label {
+  color: #64748b;
+}
+
+[data-theme="light"] .eg-input-row--tinted .eg-input-label {
+  color: #c2610c;
+}
+
+[data-theme="light"] .eg-input-time,
+[data-theme="light"] .eg-input-date {
+  background: rgba(100, 116, 139, 0.07);
+  border-color: rgba(100, 116, 139, 0.18);
+  color: #64748b;
+}
+
+[data-theme="light"] .eg-input-row--tinted .eg-input-time,
+[data-theme="light"] .eg-input-row--tinted .eg-input-date {
+  background: rgba(194, 97, 12, 0.08);
+  border-color: rgba(194, 97, 12, 0.25);
+  color: #c2610c;
+}
+
 
 [data-theme="light"] .entries-glance-item-date {
   color: #64748b;

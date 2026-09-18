@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowDownLeft, ArrowUpRight, ArrowUpDown, Check, HelpCircle, X } from 'lucide-react'
-import { formatDisplayDate, monthYearLabel, toISODate } from '../dateUtils'
+import { ArrowDownLeft, ArrowUpRight, ArrowUpDown, CalendarDays, Check, Clock, HelpCircle, X } from 'lucide-react'
+import { formatDisplayDate, formatMonthDay, isBackdated, monthYearLabel, toISODate } from '../dateUtils'
 import { parseEntryCategory, type Category } from '../categories'
 import type { Expense, IncomeEntry } from '../types'
 import type { SelectionGroup } from '../App'
@@ -10,6 +10,25 @@ import { GROUP_COLORS } from '../App'
 type ScopeFilter = 'date' | 'month' | 'year' | 'selection'
 type TypeFilter = 'all' | 'expense' | 'income'
 type SortOption = 'time-desc' | 'time-asc' | 'amount-asc' | 'amount-desc'
+
+function formatInputTimeParts(
+  createdAtIso: string,
+  timeFormat: '12h' | '24h',
+): { time: string; date: string } | null {
+  if (!createdAtIso) return null
+  const d = new Date(createdAtIso)
+  if (Number.isNaN(d.getTime())) return null
+  const thisYear = new Date().getFullYear()
+  const createdYear = d.getFullYear()
+  const base = formatMonthDay(d)
+  const datePart = createdYear === thisYear ? base : `${base} '${String(createdYear).slice(2)}`
+  const timePart = d.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: timeFormat === '12h',
+  })
+  return { time: timePart, date: datePart }
+}
 
 interface UnifiedEntry {
   id: string
@@ -22,6 +41,8 @@ interface UnifiedEntry {
   categoryBg: string
   categoryBorder: string
   timestamp: string
+  createdAt?: string
+  isWrongDay: boolean
 }
 
 interface Props {
@@ -114,10 +135,12 @@ export function EntriesGlanceModal({
     for (const exp of expenses) {
       const parsed = parseEntryCategory(exp.description, expenseCategories)
       const cat = parsed.category
+      const targetDate = exp.targetDate || exp.date
+      const isWrongDay = isBackdated(exp, targetDate)
       list.push({
         id: `exp-${exp.id}`,
         type: 'expense',
-        dateIso: exp.date,
+        dateIso: targetDate,
         amount: exp.amount,
         categoryLabel: cat ? cat.label : 'Expense',
         categoryIcon: cat ? cat.Icon : null,
@@ -125,13 +148,18 @@ export function EntriesGlanceModal({
         categoryBg: cat ? cat.bg : 'rgba(248,113,113,0.13)',
         categoryBorder: cat ? cat.border : 'rgba(248,113,113,0.22)',
         timestamp: exp.createdAt || exp.date,
+        createdAt: exp.createdAt,
+        isWrongDay,
       })
     }
 
     for (const inc of incomeEntries) {
       const parsed = parseEntryCategory(inc.description, incomeCategories)
       const cat = parsed.category
-      const incDate = inc.createdAt ? toISODate(new Date(inc.createdAt)) : ''
+      const incDate = (inc as unknown as { targetDate?: string; date?: string }).targetDate ||
+        (inc as unknown as { targetDate?: string; date?: string }).date ||
+        (inc.createdAt ? toISODate(new Date(inc.createdAt)) : '')
+      const isWrongDay = isBackdated(inc as unknown as { targetDate?: string; date?: string; createdAt: string }, incDate)
       list.push({
         id: `inc-${inc.id}`,
         type: 'income',
@@ -143,6 +171,8 @@ export function EntriesGlanceModal({
         categoryBg: cat ? cat.bg : 'rgba(74,222,128,0.13)',
         categoryBorder: cat ? cat.border : 'rgba(74,222,128,0.22)',
         timestamp: inc.createdAt,
+        createdAt: inc.createdAt,
+        isWrongDay,
       })
     }
 
@@ -528,39 +558,20 @@ function EntryRow({
   formatMoney,
   timeFormat,
 }: {
-  item: {
-    id: string
-    type: 'expense' | 'income'
-    dateIso: string
-    amount: number
-    categoryLabel: string
-    categoryIcon: React.FC<{ size?: number; strokeWidth?: number; className?: string }> | null
-    categoryColor: string
-    categoryBg: string
-    categoryBorder: string
-    timestamp: string
-  }
+  item: UnifiedEntry
   showDate: boolean
   formatMoney: (n: number) => string
   timeFormat: '12h' | '24h'
 }) {
   const IconComponent = item.categoryIcon
   const isExpense = item.type === 'expense'
-
-  // Format time from timestamp
-  const timeLabel = (() => {
-    if (!item.timestamp) return null
-    const t = new Date(item.timestamp)
-    if (Number.isNaN(t.getTime())) return null
-    return t.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: timeFormat === '12h',
-    })
-  })()
+  const inputParts = item.createdAt
+    ? formatInputTimeParts(item.createdAt, timeFormat)
+    : null
+  const tinted = item.isWrongDay
 
   return (
-    <li className="entries-glance-item">
+    <li className={`entries-glance-item ${item.isWrongDay ? 'entry-item--backdated' : ''}`.trim()}>
       {/* Left: Type Badge & Category */}
       <div className="entries-glance-item-left">
         {/* Type Badge */}
@@ -584,7 +595,7 @@ function EntryRow({
           )}
         </span>
 
-        {/* Category Icon & Category Label only */}
+        {/* Category Icon & Category Label */}
         <div className="entries-glance-category">
           <span
             className="entries-glance-cat-icon"
@@ -601,26 +612,44 @@ function EntryRow({
               <HelpCircle size={14} strokeWidth={2.2} />
             )}
           </span>
-          <span className="entries-glance-cat-name">{item.categoryLabel}</span>
+          <div className="entries-glance-cat-text">
+            <span className="entries-glance-cat-name">{item.categoryLabel}</span>
+            {inputParts && (
+              <span className={`eg-input-row${tinted ? ' eg-input-row--tinted' : ''}`}>
+                <span className="eg-input-label">Input on</span>
+                <span className="eg-input-stack">
+                  <span className="eg-input-time">
+                    <Clock size={9} strokeWidth={2} aria-hidden="true" />
+                    {inputParts.time}
+                  </span>
+                  <span className="eg-input-date">
+                    <CalendarDays size={9} strokeWidth={2} aria-hidden="true" />
+                    {inputParts.date}
+                  </span>
+                </span>
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Right: Date + Time badges & Amount */}
+      {/* Right: Date badge & Amount */}
       <div className="entries-glance-item-right">
-        <div className="eg-meta-pills">
-          {showDate && item.dateIso && (() => {
-            const d = new Date(item.dateIso + 'T12:00:00')
-            const thisYear = new Date().getFullYear()
-            const entryYear = d.getFullYear()
-            const day = d.getDate()
-            const mon = d.toLocaleDateString('en-US', { month: 'short' })
-            const label = entryYear === thisYear
-              ? `${day} ${mon}`
-              : `${day} ${mon} '${String(entryYear).slice(2)}`
-            return <span className="eg-date-pill">{label}</span>
-          })()}
-          {timeLabel && <span className="eg-time-pill">{timeLabel}</span>}
-        </div>
+        {showDate && item.dateIso && (() => {
+          const d = new Date(item.dateIso + 'T12:00:00')
+          const thisYear = new Date().getFullYear()
+          const entryYear = d.getFullYear()
+          const day = d.getDate()
+          const mon = d.toLocaleDateString('en-US', { month: 'short' })
+          const label = entryYear === thisYear
+            ? `${day} ${mon}`
+            : `${day} ${mon} '${String(entryYear).slice(2)}`
+          return (
+            <div className="eg-meta-pills">
+              <span className="eg-date-pill">{label}</span>
+            </div>
+          )
+        })()}
         <span
           className={`entries-glance-amount ${
             isExpense
