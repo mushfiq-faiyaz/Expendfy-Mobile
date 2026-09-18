@@ -5684,5 +5684,357 @@ body {
 }
 
 
+/* ═══════════════════════════════════════════════════════════════════
+   DATE SELECTION FEATURE — DARK THEME (default)
+   ═══════════════════════════════════════════════════════════════════ */
 
+/* ─── Select-Mode Toggle Button ──────────────────────────────────── */
+.calendar-select-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(22, 32, 54, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #94a3b8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  box-shadow:
+    0 0 0 1px rgba(148, 163, 184, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.25);
+  transition:
+    transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease,
+    filter 180ms ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.calendar-select-btn:hover {
+  background: rgba(30, 44, 72, 0.85);
+  border-color: rgba(148, 163, 184, 0.50);
+  color: #e2e8f0;
+  box-shadow:
+    0 0 12px rgba(148, 163, 184, 0.20),
+    0 2px 10px rgba(0, 0, 0, 0.30);
+}
+
+.calendar-select-btn:active {
+  transform: scale(0.92);
+  filter: brightness(1.22);
+  transition-duration: 160ms;
+}
+
+/* ACTIVE state — teal fill + glow ring */
+.calendar-select-btn--active {
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.90) 0%, rgba(6, 182, 212, 0.85) 100%);
+  border-color: #22d3ee;
+  color: #ecfeff;
+  box-shadow:
+    0 0 0 3px rgba(34, 211, 238, 0.32),
+    0 0 16px rgba(34, 211, 238, 0.40),
+    0 2px 8px rgba(0, 0, 0, 0.30);
+  animation: selectBtnActivate 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.calendar-select-btn--active:hover {
+  background: linear-gradient(135deg, rgba(14, 165, 198, 0.95) 0%, rgba(34, 211, 238, 0.90) 100%);
+  box-shadow:
+    0 0 0 4px rgba(34, 211, 238, 0.38),
+    0 0 22px rgba(34, 211, 238, 0.50),
+    0 2px 10px rgba(0, 0, 0, 0.30);
+}
+
+.calendar-select-btn--active:active {
+  transform: scale(0.92);
+}
+
+@keyframes selectBtnActivate {
+  from {
+    transform: rotate(-12deg) scale(0.82);
+    opacity: 0.7;
+  }
+  to {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+/* ─── Info button active state (when selection has dates) ─────────── */
+.calendar-quick-info-btn--active {
+  border-color: rgba(34, 211, 238, 0.70) !important;
+  color: #22d3ee !important;
+  box-shadow:
+    0 0 0 2px rgba(34, 211, 238, 0.20),
+    0 0 12px rgba(34, 211, 238, 0.28),
+    0 2px 8px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* ─── New Group Pill ─────────────────────────────────────────────── */
+.calendar-newgroup-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px 4px 7px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--pill-color, #22d3ee);
+  background: rgba(34, 211, 238, 0.10);
+  color: var(--pill-color, #22d3ee);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  white-space: nowrap;
+  transition:
+    background 180ms ease,
+    box-shadow 180ms ease,
+    transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 180ms ease;
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.16);
+  animation: pillFadeIn 200ms ease-out;
+}
+
+.calendar-newgroup-pill:hover {
+  background: rgba(34, 211, 238, 0.18);
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.30);
+}
+
+.calendar-newgroup-pill:active {
+  transform: scale(0.93);
+}
+
+.calendar-newgroup-pill--disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+@keyframes pillFadeIn {
+  from { opacity: 0; transform: scale(0.88) translateY(-4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ─── Selection status hint in calendar footer ────────────────────── */
+.calendar__status--select-hint {
+  color: #22d3ee;
+  font-weight: 500;
+}
+
+/* ─── Calendar cell selection overlay ───────────────────────────── */
+/* Applied when a cell belongs to any selection group */
+.calendar__cell--sel {
+  border-color: var(--sel-border, #22d3ee) !important;
+  border-width: 2px !important;
+  background-color: var(--sel-fill, rgba(34, 211, 238, 0.18)) !important;
+  box-shadow:
+    0 0 0 1px var(--sel-glow, rgba(34, 211, 238, 0.28)),
+    0 2px 8px rgba(0, 0, 0, 0.22) !important;
+  /* Smooth color transition when a date moves between groups */
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    transform 0.10s;
+}
+
+.calendar__cell--sel.calendar__cell--today {
+  /* Keep today's yellow glow but add the selection border on top */
+  border-color: var(--sel-border, #22d3ee) !important;
+  border-width: 2px !important;
+  box-shadow:
+    0 0 0 2px var(--sel-glow, rgba(34, 211, 238, 0.30)),
+    0 3px 14px rgba(234, 179, 8, 0.28) !important;
+}
+
+/* ─── Entries Glance — Selection tab ─────────────────────────────── */
+.entries-glance-tab--selection {
+  color: #22d3ee;
+}
+
+.entries-glance-tab--selection-active {
+  background: rgba(34, 211, 238, 0.14) !important;
+  color: #22d3ee !important;
+  border-color: rgba(34, 211, 238, 0.45) !important;
+}
+
+/* ─── Entries Glance — Group sections ───────────────────────────── */
+.entries-glance-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.entries-glance-group-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.entries-glance-group-section + .entries-glance-group-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  margin-top: 2px;
+  padding-top: 2px;
+}
+
+.entries-glance-group-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 3px solid var(--grp-color, #22d3ee);
+  margin-bottom: 2px;
+  border-radius: 0 6px 6px 0;
+}
+
+.entries-glance-group-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.entries-glance-group-label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--grp-color, #22d3ee);
+  flex: 1;
+  min-width: 0;
+}
+
+.entries-glance-group-mini-totals {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.entries-glance-group-mini-expense {
+  font-size: 0.70rem;
+  font-weight: 600;
+  color: #f87171;
+}
+
+.entries-glance-group-mini-income {
+  font-size: 0.70rem;
+  font-weight: 600;
+  color: #4ade80;
+}
+
+.entries-glance-group-empty {
+  font-size: 0.75rem;
+  color: #64748b;
+  text-align: center;
+  padding: 8px 12px;
+  margin: 0;
+}
+
+.entries-glance-list--grouped {
+  padding: 0 0 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DATE SELECTION FEATURE — LIGHT THEME OVERRIDES
+   ═══════════════════════════════════════════════════════════════════ */
+
+[data-theme="light"] .calendar-select-btn {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  border-radius: 12px;
+  color: #64748b;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+[data-theme="light"] .calendar-select-btn:hover {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.18);
+  color: #1e293b;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="light"] .calendar-select-btn:active {
+  background: #f1f5f9;
+  transform: scale(0.94);
+}
+
+[data-theme="light"] .calendar-select-btn--active {
+  background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+  border-color: #22d3ee;
+  color: #ecfeff;
+  box-shadow:
+    0 0 0 3px rgba(34, 211, 238, 0.28),
+    0 0 14px rgba(34, 211, 238, 0.35),
+    0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .calendar-select-btn--active:hover {
+  background: linear-gradient(135deg, #0e7490 0%, #0891b2 100%);
+}
+
+[data-theme="light"] .calendar-quick-info-btn--active {
+  border-color: rgba(8, 145, 178, 0.75) !important;
+  color: #0891b2 !important;
+  box-shadow:
+    0 0 0 2px rgba(8, 145, 178, 0.18),
+    0 0 10px rgba(8, 145, 178, 0.20),
+    0 1px 3px rgba(15, 23, 42, 0.05) !important;
+}
+
+[data-theme="light"] .calendar-newgroup-pill {
+  border-color: var(--pill-color, #0891b2);
+  background: rgba(8, 145, 178, 0.08);
+  color: var(--pill-color, #0891b2);
+  box-shadow: 0 0 6px rgba(8, 145, 178, 0.12);
+}
+
+[data-theme="light"] .calendar-newgroup-pill:hover {
+  background: rgba(8, 145, 178, 0.14);
+  box-shadow: 0 0 12px rgba(8, 145, 178, 0.24);
+}
+
+[data-theme="light"] .calendar__status--select-hint {
+  color: #0891b2;
+}
+
+[data-theme="light"] .calendar__cell--sel {
+  box-shadow:
+    0 0 0 1px var(--sel-glow, rgba(34, 211, 238, 0.25)),
+    0 2px 8px rgba(15, 23, 42, 0.08) !important;
+}
+
+[data-theme="light"] .entries-glance-tab--selection {
+  color: #0891b2;
+}
+
+[data-theme="light"] .entries-glance-tab--selection-active {
+  background: rgba(8, 145, 178, 0.10) !important;
+  color: #0891b2 !important;
+  border-color: rgba(8, 145, 178, 0.35) !important;
+}
+
+[data-theme="light"] .entries-glance-group-header {
+  background: rgba(0, 0, 0, 0.025);
+}
+
+[data-theme="light"] .entries-glance-group-section + .entries-glance-group-section {
+  border-top-color: rgba(0, 0, 0, 0.07);
+}
+
+[data-theme="light"] .entries-glance-group-label {
+  color: var(--grp-color, #0891b2);
+}
+
+[data-theme="light"] .entries-glance-group-empty {
+  color: #94a3b8;
+}
 

@@ -1,5 +1,6 @@
 import React, { memo } from 'react'
 import { DayCellBadges, type BadgeDescriptor } from './DayCellBadges'
+import { GROUP_COLORS } from '../App'
 
 export interface CalendarCellProps {
   iso: string
@@ -19,6 +20,8 @@ export interface CalendarCellProps {
   /** Pre-computed badge descriptors (empty array = no badges) */
   badges: BadgeDescriptor[]
   onTap: (iso: string, timestamp: number) => void
+  /** If defined, this cell belongs to the specified selection group (0-3) */
+  selectionGroupIndex?: number
 }
 
 export const CalendarCell = memo(function CalendarCell({
@@ -38,7 +41,19 @@ export const CalendarCell = memo(function CalendarCell({
   showRemain,
   badges,
   onTap,
+  selectionGroupIndex,
 }: CalendarCellProps) {
+  const isInSelection = selectionGroupIndex !== undefined
+  const groupColor = isInSelection ? GROUP_COLORS[selectionGroupIndex] : undefined
+
+  const selectionStyle: React.CSSProperties | undefined = groupColor
+    ? {
+        '--sel-border': groupColor.border,
+        '--sel-fill': groupColor.fill,
+        '--sel-glow': groupColor.glow,
+      } as React.CSSProperties
+    : undefined
+
   return (
     <button
       type="button"
@@ -52,14 +67,16 @@ export const CalendarCell = memo(function CalendarCell({
         isToday && 'calendar__cell--today',
         isSelected && 'calendar__cell--selected',
         badges.length > 0 && 'calendar__cell--has-badges',
+        isInSelection && 'calendar__cell--sel',
       ]
         .filter(Boolean)
         .join(' ')}
-      style={
-        hasInput && !isToday
+      style={{
+        ...(hasInput && !isToday
           ? ({ '--spend-intensity': spendIntensity } as React.CSSProperties)
-          : undefined
-      }
+          : {}),
+        ...selectionStyle,
+      }}
       onClick={(e) => onTap(iso, e.timeStamp)}
     >
       {/* Badge row — top-right, does not affect content layout */}

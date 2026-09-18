@@ -4,8 +4,10 @@ import { ArrowDownLeft, ArrowUpRight, HelpCircle, X } from 'lucide-react'
 import { formatDisplayDate, monthYearLabel, toISODate } from '../dateUtils'
 import { parseEntryCategory, type Category } from '../categories'
 import type { Expense, IncomeEntry } from '../types'
+import type { SelectionGroup } from '../App'
+import { GROUP_COLORS } from '../App'
 
-type ScopeFilter = 'date' | 'month' | 'all'
+type ScopeFilter = 'date' | 'month' | 'all' | 'selection'
 type TypeFilter = 'all' | 'expense' | 'income'
 
 interface UnifiedEntry {
@@ -32,6 +34,8 @@ interface Props {
   expenseCategories: Category[]
   incomeCategories: Category[]
   formatMoney: (n: number) => string
+  selectMode?: boolean
+  selectionGroups?: SelectionGroup[]
 }
 
 export function EntriesGlanceModal({
@@ -45,9 +49,25 @@ export function EntriesGlanceModal({
   expenseCategories,
   incomeCategories,
   formatMoney,
+  selectMode = false,
+  selectionGroups = [],
 }: Props) {
-  const [scope, setScope] = useState<ScopeFilter>('date')
+  const hasAnySelection = selectionGroups.some((g) => g.dates.size > 0)
+
+  const [scope, setScope] = useState<ScopeFilter>(() =>
+    selectMode && hasAnySelection ? 'selection' : 'date',
+  )
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
+
+  // Auto-switch to selection tab when modal opens with active selection
+  useEffect(() => {
+    if (open && selectMode && hasAnySelection) {
+      setScope('selection')
+    } else if (open && !selectMode && scope === 'selection') {
+      setScope('date')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, selectMode, hasAnySelection])
 
   // Close on Escape key
   useEffect(() => {
@@ -110,6 +130,7 @@ export function EntriesGlanceModal({
 
   // Filter based on scope and type
   const filteredEntries = useMemo(() => {
+    if (scope === 'selection') return [] // handled separately
     return unifiedEntries.filter((item) => {
       // Type filter
       if (typeFilter !== 'all' && item.type !== typeFilter) {
@@ -129,7 +150,34 @@ export function EntriesGlanceModal({
     })
   }, [unifiedEntries, scope, typeFilter, selectedDate, viewYear, viewMonth])
 
-  // Count & Totals for footer
+  // Build per-group entries when in selection scope
+  const groupedEntries = useMemo(() => {
+    if (scope !== 'selection') return []
+    return selectionGroups
+      .map((group, idx) => {
+        const entries = unifiedEntries.filter((item) => {
+          if (typeFilter !== 'all' && item.type !== typeFilter) return false
+          return group.dates.has(item.dateIso)
+        })
+        let totalExpense = 0
+        let totalIncome = 0
+        for (const item of entries) {
+          if (item.type === 'expense') totalExpense += item.amount
+          else totalIncome += item.amount
+        }
+        return {
+          groupIndex: idx,
+          colorKey: group.colorKey,
+          dateCount: group.dates.size,
+          entries,
+          totalExpense,
+          totalIncome,
+        }
+      })
+      .filter((g) => g.dateCount > 0)
+  }, [scope, selectionGroups, unifiedEntries, typeFilter])
+
+  // Count & Totals for footer (non-selection scopes)
   const summary = useMemo(() => {
     let totalExpense = 0
     let totalIncome = 0
@@ -139,6 +187,34 @@ export function EntriesGlanceModal({
     }
     return { totalExpense, totalIncome, count: filteredEntries.length }
   }, [filteredEntries])
+
+  // Combined totals for selection footer
+  const selectionSummary = useMemo(() => {
+    let totalExpense = 0
+    let totalIncome = 0
+    for (const g of groupedEntries) {
+      totalExpense += g.totalExpense
+      totalIncome += g.totalIncome
+    }
+    return { totalExpense, totalIncome }
+  }, [groupedEntries])
+
+  // Subtitle string
+  const subtitleText = useMemo(() => {
+    if (scope === 'selection') {
+      const activeGroups = groupedEntries.filter((g) => g.dateCount > 0)
+      if (activeGroups.length === 0) return 'No dates selected'
+      if (activeGroups.length === 1) {
+        return `${activeGroups[0].dateCount} day${activeGroups[0].dateCount !== 1 ? 's' : ''} selected`
+      }
+      return activeGroups
+        .map((g, i) => `Group ${i + 1}: ${g.dateCount} day${g.dateCount !== 1 ? 's' : ''}`)
+        .join(', ')
+    }
+    if (scope === 'date') return formatDisplayDate(selectedDate)
+    if (scope === 'month') return monthYearLabel(viewYear, viewMonth)
+    return 'All recorded entries'
+  }, [scope, groupedEntries, selectedDate, viewYear, viewMonth])
 
   if (!open) return null
 
@@ -158,11 +234,7 @@ export function EntriesGlanceModal({
               Entries Glance
             </h2>
             <p className="entries-glance-subtitle">
-              {scope === 'date'
-                ? formatDisplayDate(selectedDate)
-                : scope === 'month'
-                  ? monthYearLabel(viewYear, viewMonth)
-                  : 'All recorded entries'}
+              {subtitleText}
             </p>
           </div>
           <button
@@ -205,6 +277,18 @@ export function EntriesGlanceModal({
             >
               All
             </button>
+            {/* Selection tab — only shown while select mode is active */}
+            {selectMode && (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={scope === 'selection'}
+                className={`entries-glance-tab entries-glance-tab--selection ${scope === 'selection' ? 'entries-glance-tab--active entries-glance-tab--selection-active' : ''}`}
+                onClick={() => setScope('selection')}
+              >
+                Selection
+              </button>
+            )}
           </div>
 
           <div className="entries-glance-type-chips">
@@ -232,83 +316,87 @@ export function EntriesGlanceModal({
           </div>
         </div>
 
-        {/* Read-only Entry List (Only Type, Category, Amount) */}
+        {/* Entry List body */}
         <div className="entries-glance-body">
-          {filteredEntries.length === 0 ? (
-            <div className="entries-glance-empty">
-              <p>No entries found for this view</p>
-            </div>
-          ) : (
-            <ul className="entries-glance-list">
-              {filteredEntries.map((item) => {
-                const IconComponent = item.categoryIcon
-                const isExpense = item.type === 'expense'
-
-                return (
-                  <li key={item.id} className="entries-glance-item">
-                    {/* Left: Type Badge & Category */}
-                    <div className="entries-glance-item-left">
-                      {/* Type Badge */}
-                      <span
-                        className={`entries-glance-type-badge ${
-                          isExpense
-                            ? 'entries-glance-type-badge--expense'
-                            : 'entries-glance-type-badge--income'
-                        }`}
+          {scope === 'selection' ? (
+            /* ── Multi-group Selection View ── */
+            groupedEntries.length === 0 ? (
+              <div className="entries-glance-empty">
+                <p>No dates selected yet</p>
+              </div>
+            ) : groupedEntries.length === 1 ? (
+              /* Single group — flat list */
+              groupedEntries[0].entries.length === 0 ? (
+                <div className="entries-glance-empty">
+                  <p>No entries for selected dates</p>
+                </div>
+              ) : (
+                <ul className="entries-glance-list">
+                  {groupedEntries[0].entries.map((item) => (
+                    <EntryRow key={item.id} item={item} showDate formatMoney={formatMoney} />
+                  ))}
+                </ul>
+              )
+            ) : (
+              /* Multiple groups — sectioned */
+              <div className="entries-glance-groups">
+                {groupedEntries.map((g, sectionIdx) => {
+                  const color = GROUP_COLORS[g.colorKey]
+                  return (
+                    <div key={g.groupIndex} className="entries-glance-group-section">
+                      <div
+                        className="entries-glance-group-header"
+                        style={{ '--grp-color': color.border, '--grp-fill': color.fill } as React.CSSProperties}
                       >
-                        {isExpense ? (
-                          <>
-                            <ArrowDownLeft size={11} strokeWidth={2.4} />
-                            <span>Expense</span>
-                          </>
-                        ) : (
-                          <>
-                            <ArrowUpRight size={11} strokeWidth={2.4} />
-                            <span>Income</span>
-                          </>
-                        )}
-                      </span>
-
-                      {/* Category Icon & Category Label only */}
-                      <div className="entries-glance-category">
                         <span
-                          className="entries-glance-cat-icon"
-                          style={{
-                            background: item.categoryBg,
-                            border: `1px solid ${item.categoryBorder}`,
-                            color: item.categoryColor,
-                          }}
+                          className="entries-glance-group-dot"
+                          style={{ background: color.border }}
                           aria-hidden="true"
-                        >
-                          {IconComponent ? (
-                            <IconComponent size={14} strokeWidth={2.2} />
-                          ) : (
-                            <HelpCircle size={14} strokeWidth={2.2} />
+                        />
+                        <span className="entries-glance-group-label">
+                          Group {sectionIdx + 1} — {g.dateCount} day{g.dateCount !== 1 ? 's' : ''}
+                        </span>
+                        <span className="entries-glance-group-mini-totals">
+                          <span className="entries-glance-group-mini-expense">{formatMoney(g.totalExpense)}</span>
+                          {g.totalIncome > 0 && (
+                            <span className="entries-glance-group-mini-income">+{formatMoney(g.totalIncome)}</span>
                           )}
                         </span>
-                        <span className="entries-glance-cat-name">{item.categoryLabel}</span>
                       </div>
-                    </div>
-
-                    {/* Right: Date (if broader scope) & Amount */}
-                    <div className="entries-glance-item-right">
-                      {scope !== 'date' && item.dateIso && (
-                        <span className="entries-glance-item-date">{item.dateIso}</span>
+                      {g.entries.length === 0 ? (
+                        <p className="entries-glance-group-empty">No entries</p>
+                      ) : (
+                        <ul className="entries-glance-list entries-glance-list--grouped">
+                          {g.entries.map((item) => (
+                            <EntryRow key={item.id} item={item} showDate formatMoney={formatMoney} />
+                          ))}
+                        </ul>
                       )}
-                      <span
-                        className={`entries-glance-amount ${
-                          isExpense
-                            ? 'entries-glance-amount--expense'
-                            : 'entries-glance-amount--income'
-                        }`}
-                      >
-                        {isExpense ? `-${formatMoney(item.amount)}` : `+${formatMoney(item.amount)}`}
-                      </span>
                     </div>
-                  </li>
-                )
-              })}
-            </ul>
+                  )
+                })}
+              </div>
+            )
+          ) : (
+            /* ── Standard non-selection view ── */
+            filteredEntries.length === 0 ? (
+              <div className="entries-glance-empty">
+                <p>No entries found for this view</p>
+              </div>
+            ) : (
+              <ul className="entries-glance-list">
+                {filteredEntries.map((item) => {
+                  return (
+                    <EntryRow
+                      key={item.id}
+                      item={item}
+                      showDate={scope !== 'date'}
+                      formatMoney={formatMoney}
+                    />
+                  )
+                })}
+              </ul>
+            )
           )}
         </div>
 
@@ -317,18 +405,106 @@ export function EntriesGlanceModal({
           <div className="entries-glance-footer-stat">
             <span className="entries-glance-footer-label">Total Spent:</span>
             <span className="entries-glance-footer-val entries-glance-footer-val--expense">
-              {formatMoney(summary.totalExpense)}
+              {formatMoney(scope === 'selection' ? selectionSummary.totalExpense : summary.totalExpense)}
             </span>
           </div>
           <div className="entries-glance-footer-stat">
             <span className="entries-glance-footer-label">Total Income:</span>
             <span className="entries-glance-footer-val entries-glance-footer-val--income">
-              {formatMoney(summary.totalIncome)}
+              {formatMoney(scope === 'selection' ? selectionSummary.totalIncome : summary.totalIncome)}
             </span>
           </div>
         </div>
       </div>
     </div>,
     document.body,
+  )
+}
+
+// ── Shared entry row component ────────────────────────────────────────────────
+function EntryRow({
+  item,
+  showDate,
+  formatMoney,
+}: {
+  item: {
+    id: string
+    type: 'expense' | 'income'
+    dateIso: string
+    amount: number
+    categoryLabel: string
+    categoryIcon: React.FC<{ size?: number; strokeWidth?: number; className?: string }> | null
+    categoryColor: string
+    categoryBg: string
+    categoryBorder: string
+  }
+  showDate: boolean
+  formatMoney: (n: number) => string
+}) {
+  const IconComponent = item.categoryIcon
+  const isExpense = item.type === 'expense'
+
+  return (
+    <li className="entries-glance-item">
+      {/* Left: Type Badge & Category */}
+      <div className="entries-glance-item-left">
+        {/* Type Badge */}
+        <span
+          className={`entries-glance-type-badge ${
+            isExpense
+              ? 'entries-glance-type-badge--expense'
+              : 'entries-glance-type-badge--income'
+          }`}
+        >
+          {isExpense ? (
+            <>
+              <ArrowDownLeft size={11} strokeWidth={2.4} />
+              <span>Expense</span>
+            </>
+          ) : (
+            <>
+              <ArrowUpRight size={11} strokeWidth={2.4} />
+              <span>Income</span>
+            </>
+          )}
+        </span>
+
+        {/* Category Icon & Category Label only */}
+        <div className="entries-glance-category">
+          <span
+            className="entries-glance-cat-icon"
+            style={{
+              background: item.categoryBg,
+              border: `1px solid ${item.categoryBorder}`,
+              color: item.categoryColor,
+            }}
+            aria-hidden="true"
+          >
+            {IconComponent ? (
+              <IconComponent size={14} strokeWidth={2.2} />
+            ) : (
+              <HelpCircle size={14} strokeWidth={2.2} />
+            )}
+          </span>
+          <span className="entries-glance-cat-name">{item.categoryLabel}</span>
+        </div>
+      </div>
+
+      {/* Right: Date (if broader scope) & Amount */}
+      <div className="entries-glance-item-right">
+        {showDate && item.dateIso && (
+          <span className="entries-glance-item-date">{item.dateIso}</span>
+        )}
+        <span
+          className={`entries-glance-amount ${
+            isExpense
+              ? 'entries-glance-amount--expense'
+              : 'entries-glance-amount--income'
+          }`}
+        >
+          {isExpense ? `-${formatMoney(item.amount)}` : `+${formatMoney(item.amount)}`}
+        </span>
+      </div>
+    </li>
   )
 }

@@ -1,6 +1,19 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Analytics } from '@vercel/analytics/react'
-import { Info, Plus } from 'lucide-react'
+import { CalendarCheck, Info, Plus, X } from 'lucide-react'
+
+// ─── Date-Selection Types & Constants ────────────────────────────────────────
+export type SelectionGroup = {
+  dates: Set<string>
+  colorKey: 0 | 1 | 2 | 3
+}
+
+export const GROUP_COLORS = [
+  { border: '#22d3ee', fill: 'rgba(34,211,238,0.20)', glow: 'rgba(34,211,238,0.28)', label: 'Teal' },
+  { border: '#f97316', fill: 'rgba(249,115,22,0.20)',  glow: 'rgba(249,115,22,0.28)',  label: 'Orange' },
+  { border: '#a855f7', fill: 'rgba(168,85,247,0.20)', glow: 'rgba(168,85,247,0.28)', label: 'Purple' },
+  { border: '#ec4899', fill: 'rgba(236,72,153,0.20)', glow: 'rgba(236,72,153,0.28)', label: 'Pink' },
+] as const
 import { Calendar } from './components/Calendar'
 import { ExpenseSheet } from './components/ExpenseSheet'
 import { Header } from './components/Header'
@@ -278,6 +291,57 @@ export default function App() {
   const [entriesGlanceOpen, setEntriesGlanceOpen] = useState(false)
   const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null)
   const [installPromptDismissed, setInstallPromptDismissed] = useState(false)
+
+  // ─── Date-Selection State ────────────────────────────────────────────────────
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectionGroups, setSelectionGroups] = useState<SelectionGroup[]>([
+    { dates: new Set<string>(), colorKey: 0 },
+  ])
+  const [activeGroupIndex, setActiveGroupIndex] = useState(0)
+
+  const hasAnySelection = selectionGroups.some((g) => g.dates.size > 0)
+
+  const handleToggleSelectMode = useCallback(() => {
+    setSelectMode((prev) => {
+      if (prev) {
+        // Turning OFF — clear everything
+        setSelectionGroups([{ dates: new Set<string>(), colorKey: 0 }])
+        setActiveGroupIndex(0)
+      }
+      return !prev
+    })
+  }, [])
+
+  const handleCellTapInSelectMode = useCallback((iso: string) => {
+    setSelectionGroups((prev) => {
+      const next = prev.map((g) => ({ ...g, dates: new Set(g.dates) })) as SelectionGroup[]
+      // Check if this date exists in any group
+      for (let i = 0; i < next.length; i++) {
+        if (next[i].dates.has(iso)) {
+          next[i].dates.delete(iso)
+          break
+        }
+      }
+      // Now check active group — re-add only if we just deleted it from ANOTHER group
+      // If user tapped a date already in the ACTIVE group, it stays deleted (toggle off)
+      // We need to know if the date was in a different group — check original
+      const wasInActiveGroup = prev[activeGroupIndex]?.dates.has(iso) ?? false
+      if (!wasInActiveGroup) {
+        // Add to active group
+        next[activeGroupIndex].dates.add(iso)
+      }
+      return next
+    })
+  }, [activeGroupIndex])
+
+  const handleNewGroup = useCallback(() => {
+    setSelectionGroups((prev) => {
+      if (prev.length >= 4) return prev
+      const nextColorKey = prev.length as 0 | 1 | 2 | 3
+      return [...prev, { dates: new Set<string>(), colorKey: nextColorKey }]
+    })
+    setActiveGroupIndex((prev) => Math.min(prev + 1, 3))
+  }, [])
 
   const monthlySpent = useMemo(
     () => sumExpensesForMonth(expenses, viewYear, viewMonth),
@@ -955,7 +1019,16 @@ export default function App() {
         <div className="calendar-action-bar">
           <button
             type="button"
-            className="calendar-quick-info-btn"
+            className={`calendar-select-btn${selectMode ? ' calendar-select-btn--active' : ''}`}
+            onClick={handleToggleSelectMode}
+            aria-label={selectMode ? 'Cancel date selection' : 'Select dates'}
+            title={selectMode ? 'Cancel selection' : 'Select dates'}
+          >
+            {selectMode ? <X size={17} strokeWidth={2.2} /> : <CalendarCheck size={17} strokeWidth={1.9} />}
+          </button>
+          <button
+            type="button"
+            className={`calendar-quick-info-btn${selectMode && hasAnySelection ? ' calendar-quick-info-btn--active' : ''}`}
             onClick={handleOpenGlance}
             aria-label="Glance past entries"
             title="Glance past entries"
@@ -989,6 +1062,11 @@ export default function App() {
           entries={allCalendarEntries}
           todayDate={today}
           todayDateIso={todayIso}
+          selectMode={selectMode}
+          selectionGroups={selectionGroups}
+          activeGroupIndex={activeGroupIndex}
+          onCellTapInSelectMode={handleCellTapInSelectMode}
+          onNewGroup={handleNewGroup}
         />
       </main>
 
@@ -1075,6 +1153,8 @@ export default function App() {
         expenseCategories={mergedExpenseCategories}
         incomeCategories={mergedIncomeCategories}
         formatMoney={formatMoney}
+        selectMode={selectMode}
+        selectionGroups={selectionGroups}
       />
 
       <QuickEntryModal

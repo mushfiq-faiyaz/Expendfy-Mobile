@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Check, SlidersHorizontal } from 'lucide-react'
+import { Check, Plus, SlidersHorizontal } from 'lucide-react'
 import {
   daysInMonth,
   extractDateOnly,
@@ -15,6 +15,8 @@ import { CalendarCell } from './CalendarCell'
 import type { BadgeDescriptor } from './DayCellBadges'
 import type { CalendarEntry } from '../types'
 import { getNetworkNow, getNetworkTodayIso } from '../networkTime'
+import type { SelectionGroup } from '../App'
+import { GROUP_COLORS } from '../App'
 
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
 
@@ -42,6 +44,12 @@ type Props = {
   entries?: CalendarEntry[]
   todayDate?: Date
   todayDateIso?: string
+  // Selection mode props
+  selectMode?: boolean
+  selectionGroups?: SelectionGroup[]
+  activeGroupIndex?: number
+  onCellTapInSelectMode?: (iso: string) => void
+  onNewGroup?: () => void
 }
 
 export function Calendar({
@@ -59,6 +67,11 @@ export function Calendar({
   entries,
   todayDate,
   todayDateIso: propTodayDateIso,
+  selectMode = false,
+  selectionGroups = [],
+  activeGroupIndex = 0,
+  onCellTapInSelectMode,
+  onNewGroup,
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null)
   const weekdayRowRef = useRef<HTMLDivElement>(null)
@@ -246,6 +259,17 @@ export function Calendar({
     return map
   }, [entries])
 
+  // Build a quick lookup: iso -> group index (for selection highlights)
+  const selectionMap = useMemo<Record<string, number>>(() => {
+    const map: Record<string, number> = {}
+    for (let i = 0; i < selectionGroups.length; i++) {
+      for (const iso of selectionGroups[i].dates) {
+        map[iso] = i
+      }
+    }
+    return map
+  }, [selectionGroups])
+
   const blockWidth = 7 * cellPx + 6 * WEEKDAY_GRID_GAP_PX
 
   const isEmptyDay = !spendByDate[selectedDate] && selectedDate <= todayDateIso
@@ -257,6 +281,10 @@ export function Calendar({
 
   const handleCellTap = useCallback(
     (iso: string, now: number): void => {
+      if (selectMode) {
+        onCellTapInSelectMode?.(iso)
+        return
+      }
       const prev = lastTapRef.current
       // Double-tap opens quick entry for today or any past date (not future)
       const isFuture = iso > todayDateIso
@@ -268,8 +296,11 @@ export function Calendar({
       lastTapRef.current = { iso, ts: now }
       onSelectDate(iso)
     },
-    [todayDateIso, onDoubleTapDate, onSelectDate],
+    [selectMode, todayDateIso, onDoubleTapDate, onSelectDate, onCellTapInSelectMode],
   )
+
+  const canAddNewGroup = selectionGroups.length < 4
+  const activeColor = GROUP_COLORS[activeGroupIndex] ?? GROUP_COLORS[0]
 
   return (
     <div className="calendar">
@@ -325,6 +356,22 @@ export function Calendar({
             </div>
           )}
         </div>
+
+        {/* New Group pill — only shown when select mode is active */}
+        {selectMode && (
+          <button
+            type="button"
+            className={`calendar-newgroup-pill${!canAddNewGroup ? ' calendar-newgroup-pill--disabled' : ''}`}
+            onClick={canAddNewGroup ? onNewGroup : undefined}
+            aria-label="Start new selection group"
+            title={canAddNewGroup ? `New group (${GROUP_COLORS[selectionGroups.length]?.label ?? ''})` : 'Maximum 4 groups reached'}
+            style={{ '--pill-color': activeColor.border } as React.CSSProperties}
+          >
+            <Plus size={12} strokeWidth={2.5} />
+            <span>New Group</span>
+          </button>
+        )}
+
         <button
           type="button"
           className="calendar__nav-btn"
@@ -366,7 +413,7 @@ export function Calendar({
             const hasInput = spent > 0
             const diff = spent - averageExpense // > 0 = over budget, <= 0 = remain under budget
             const isToday = todayIso === iso
-            const isSelected = selectedDate === iso
+            const isSelected = !selectMode && selectedDate === iso
             const isOver = diff > 0
             const hasIncome = inCurrentMonth && (incomeDates?.has(iso) ?? false)
             const isHighestSpend =
@@ -388,6 +435,8 @@ export function Calendar({
             const showSpent = hasInput && (displayMode === 'both' || displayMode === 'spent')
             const showRemain = hasInput && (displayMode === 'both' || displayMode === 'remain')
 
+            const selectionGroupIndex = selectionMap[iso] ?? undefined
+
             return (
               <CalendarCell
                 key={iso}
@@ -407,18 +456,25 @@ export function Calendar({
                 showRemain={showRemain}
                 badges={badgesByDate[iso] ?? []}
                 onTap={handleCellTap}
+                selectionGroupIndex={selectionGroupIndex}
               />
             )
           })}
         </div>
         <div className="calendar__footer" style={{ width: blockWidth }}>
-          {isEmptyDay ? (
+          {!selectMode && isEmptyDay ? (
             <p className="calendar__empty-text">
               No entries for this day.
             </p>
-          ) : statusMessage ? (
+          ) : !selectMode && statusMessage ? (
             <p className="calendar__status">
               {statusMessage}
+            </p>
+          ) : selectMode ? (
+            <p className="calendar__status calendar__status--select-hint">
+              {selectionGroups.reduce((sum, g) => sum + g.dates.size, 0) === 0
+                ? 'Tap dates to select them'
+                : `${selectionGroups.reduce((sum, g) => sum + g.dates.size, 0)} date${selectionGroups.reduce((sum, g) => sum + g.dates.size, 0) !== 1 ? 's' : ''} selected — tap ⓘ to view`}
             </p>
           ) : null}
         </div>
