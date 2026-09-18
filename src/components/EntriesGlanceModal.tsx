@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowDownLeft, ArrowUpRight, HelpCircle, X } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, ArrowUpDown, Check, HelpCircle, X } from 'lucide-react'
 import { formatDisplayDate, monthYearLabel, toISODate } from '../dateUtils'
 import { parseEntryCategory, type Category } from '../categories'
 import type { Expense, IncomeEntry } from '../types'
@@ -9,6 +9,7 @@ import { GROUP_COLORS } from '../App'
 
 type ScopeFilter = 'date' | 'month' | 'year' | 'selection'
 type TypeFilter = 'all' | 'expense' | 'income'
+type SortOption = 'time-desc' | 'time-asc' | 'amount-asc' | 'amount-desc'
 
 interface UnifiedEntry {
   id: string
@@ -60,6 +61,10 @@ export function EntriesGlanceModal({
     selectMode && hasAnySelection ? 'selection' : 'date',
   )
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
+  const [sortOption, setSortOption] = useState<SortOption>('time-desc')
+  const [sortDropdownOpen, setSortDropdownOpen] = useState(false)
+  const sortBtnRef = useRef<HTMLButtonElement>(null)
+  const sortDropdownRef = useRef<HTMLDivElement>(null)
 
   // Auto-switch to selection tab when modal opens with active selection
   useEffect(() => {
@@ -76,14 +81,33 @@ export function EntriesGlanceModal({
     if (!open) return
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose()
+        if (sortDropdownOpen) {
+          setSortDropdownOpen(false)
+        } else {
+          onClose()
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [open, onClose])
+  }, [open, onClose, sortDropdownOpen])
 
-  // Build unified entry list
+  // Close sort dropdown on outside click
+  useEffect(() => {
+    if (!sortDropdownOpen) return
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (
+        sortBtnRef.current && !sortBtnRef.current.contains(e.target as Node) &&
+        sortDropdownRef.current && !sortDropdownRef.current.contains(e.target as Node)
+      ) {
+        setSortDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [sortDropdownOpen])
+
+  // Build unified entry list (unsorted — sorting applied per-display)
   const unifiedEntries = useMemo<UnifiedEntry[]>(() => {
     const list: UnifiedEntry[] = []
 
@@ -122,18 +146,31 @@ export function EntriesGlanceModal({
       })
     }
 
-    // Sort descending by timestamp / date
-    return list.sort((a, b) => {
-      const ta = new Date(a.timestamp).getTime()
-      const tb = new Date(b.timestamp).getTime()
-      return (Number.isNaN(tb) ? 0 : tb) - (Number.isNaN(ta) ? 0 : ta)
-    })
+    return list
   }, [expenses, incomeEntries, expenseCategories, incomeCategories])
+
+  // Sort helper — applies current sortOption to any entry array
+  const sortEntries = useMemo(() => {
+    return (list: UnifiedEntry[]) => {
+      const sorted = [...list]
+      sorted.sort((a, b) => {
+        if (sortOption === 'amount-asc') return a.amount - b.amount
+        if (sortOption === 'amount-desc') return b.amount - a.amount
+        // time-desc / time-asc
+        const ta = new Date(a.timestamp).getTime()
+        const tb = new Date(b.timestamp).getTime()
+        const safeA = Number.isNaN(ta) ? 0 : ta
+        const safeB = Number.isNaN(tb) ? 0 : tb
+        return sortOption === 'time-asc' ? safeA - safeB : safeB - safeA
+      })
+      return sorted
+    }
+  }, [sortOption])
 
   // Filter based on scope and type
   const filteredEntries = useMemo(() => {
     if (scope === 'selection') return [] // handled separately
-    return unifiedEntries.filter((item) => {
+    const base = unifiedEntries.filter((item) => {
       // Type filter
       if (typeFilter !== 'all' && item.type !== typeFilter) {
         return false
@@ -155,17 +192,19 @@ export function EntriesGlanceModal({
       }
       return true
     })
-  }, [unifiedEntries, scope, typeFilter, selectedDate, viewYear, viewMonth])
+    return sortEntries(base)
+  }, [unifiedEntries, scope, typeFilter, selectedDate, viewYear, viewMonth, sortEntries])
 
   // Build per-group entries when in selection scope
   const groupedEntries = useMemo(() => {
     if (scope !== 'selection') return []
     return selectionGroups
       .map((group, idx) => {
-        const entries = unifiedEntries.filter((item) => {
+        const filtered = unifiedEntries.filter((item) => {
           if (typeFilter !== 'all' && item.type !== typeFilter) return false
           return group.dates.has(item.dateIso)
         })
+        const entries = sortEntries(filtered)
         let totalExpense = 0
         let totalIncome = 0
         for (const item of entries) {
@@ -182,7 +221,8 @@ export function EntriesGlanceModal({
         }
       })
       .filter((g) => g.dateCount > 0)
-  }, [scope, selectionGroups, unifiedEntries, typeFilter])
+  }, [scope, selectionGroups, unifiedEntries, typeFilter, sortEntries])
+
 
   // Count & Totals for footer (non-selection scopes)
   const summary = useMemo(() => {
@@ -237,22 +277,22 @@ export function EntriesGlanceModal({
       <div className="entries-glance-dialog">
         {/* Header */}
         <div className="entries-glance-head">
-          <div>
-            <h2 id="glance-modal-title" className="entries-glance-title">
-              Entries Glance
-            </h2>
-            <p className="entries-glance-subtitle">
+          <h2 id="glance-modal-title" className="entries-glance-title">
+            Entries Glance
+          </h2>
+          <div className="entries-glance-head-right">
+            <span className="entries-glance-subtitle">
               {subtitleText}
-            </p>
+            </span>
+            <button
+              type="button"
+              className="entries-glance-close-btn"
+              onClick={onClose}
+              aria-label="Close modal"
+            >
+              <X size={18} />
+            </button>
           </div>
-          <button
-            type="button"
-            className="entries-glance-close-btn"
-            onClick={onClose}
-            aria-label="Close modal"
-          >
-            <X size={18} />
-          </button>
         </div>
 
         {/* Filter controls */}
@@ -299,28 +339,79 @@ export function EntriesGlanceModal({
             )}
           </div>
 
-          <div className="entries-glance-type-chips">
-            <button
-              type="button"
-              className={`entries-glance-chip ${typeFilter === 'all' ? 'entries-glance-chip--active' : ''}`}
-              onClick={() => setTypeFilter('all')}
-            >
-              All
-            </button>
-            <button
-              type="button"
-              className={`entries-glance-chip ${typeFilter === 'expense' ? 'entries-glance-chip--active-expense' : ''}`}
-              onClick={() => setTypeFilter('expense')}
-            >
-              Expenses
-            </button>
-            <button
-              type="button"
-              className={`entries-glance-chip ${typeFilter === 'income' ? 'entries-glance-chip--active-income' : ''}`}
-              onClick={() => setTypeFilter('income')}
-            >
-              Income
-            </button>
+          {/* Filter chips row + sort button */}
+          <div className="entries-glance-chips-row">
+            <div className="entries-glance-type-chips">
+              <button
+                type="button"
+                className={`entries-glance-chip ${typeFilter === 'all' ? 'entries-glance-chip--active' : ''}`}
+                onClick={() => setTypeFilter('all')}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                className={`entries-glance-chip ${typeFilter === 'expense' ? 'entries-glance-chip--active-expense' : ''}`}
+                onClick={() => setTypeFilter('expense')}
+              >
+                Expenses
+              </button>
+              <button
+                type="button"
+                className={`entries-glance-chip ${typeFilter === 'income' ? 'entries-glance-chip--active-income' : ''}`}
+                onClick={() => setTypeFilter('income')}
+              >
+                Income
+              </button>
+            </div>
+
+            {/* Sort button */}
+            <div className="eg-sort-wrap">
+              <button
+                ref={sortBtnRef}
+                type="button"
+                className={`eg-sort-btn${sortDropdownOpen ? ' eg-sort-btn--open' : ''}${sortOption !== 'time-desc' ? ' eg-sort-btn--active' : ''}`}
+                onClick={() => setSortDropdownOpen((v) => !v)}
+                aria-label="Sort entries"
+                aria-expanded={sortDropdownOpen}
+                aria-haspopup="listbox"
+              >
+                <ArrowUpDown size={13} strokeWidth={2.5} />
+              </button>
+
+              {sortDropdownOpen && (
+                <div
+                  ref={sortDropdownRef}
+                  className="eg-sort-dropdown"
+                  role="listbox"
+                  aria-label="Sort options"
+                >
+                  {([
+                    { key: 'time-desc', label: 'Time: Newest First' },
+                    { key: 'time-asc',  label: 'Time: Oldest First' },
+                    { key: 'amount-desc', label: 'Amount: High to Low' },
+                    { key: 'amount-asc',  label: 'Amount: Low to High' },
+                  ] as { key: SortOption; label: string }[]).map(({ key, label }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      role="option"
+                      aria-selected={sortOption === key}
+                      className={`eg-sort-option${sortOption === key ? ' eg-sort-option--active' : ''}`}
+                      onClick={() => {
+                        setSortOption(key)
+                        setSortDropdownOpen(false)
+                      }}
+                    >
+                      <span className="eg-sort-option-label">{label}</span>
+                      {sortOption === key && (
+                        <Check size={12} strokeWidth={2.8} className="eg-sort-option-check" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

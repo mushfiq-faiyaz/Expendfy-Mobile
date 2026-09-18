@@ -4046,10 +4046,11 @@ body {
 
 .entries-glance-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  padding: 18px 20px 12px;
+  padding: 16px 20px 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 10px;
 }
 
 .entries-glance-title {
@@ -4060,11 +4061,22 @@ body {
   letter-spacing: -0.01em;
 }
 
+.entries-glance-head-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
 .entries-glance-subtitle {
-  margin: 3px 0 0;
-  font-size: 0.8rem;
-  color: #94a3b8;
-  font-weight: 500;
+  font-size: 0.97rem;
+  font-weight: 600;
+  color: #facc15;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 260px;
 }
 
 .entries-glance-close-btn {
@@ -4080,6 +4092,7 @@ body {
   cursor: pointer;
   transition: all 0.15s ease;
   padding: 0;
+  flex-shrink: 0;
 }
 
 .entries-glance-close-btn:hover {
@@ -4162,6 +4175,126 @@ body {
   border-color: rgba(34, 197, 94, 0.35);
   color: #4ade80;
 }
+
+/* ─── Filter chips row (chips + sort btn on same line) ──────────── */
+.entries-glance-chips-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* ─── Sort button & dropdown ─────────────────────────────────────── */
+.eg-sort-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.eg-sort-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.eg-sort-btn:hover {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #cbd5e1;
+}
+
+.eg-sort-btn--open {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #a5b4fc;
+}
+
+.eg-sort-btn--active {
+  background: rgba(99, 102, 241, 0.14);
+  border-color: rgba(99, 102, 241, 0.38);
+  color: #a5b4fc;
+}
+
+.eg-sort-btn--active:hover {
+  background: rgba(99, 102, 241, 0.22);
+}
+
+.eg-sort-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  background: #121c30;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.30),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+  padding: 5px;
+  min-width: 172px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: egSortFadeIn 0.14s ease-out;
+}
+
+@keyframes egSortFadeIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.eg-sort-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.eg-sort-option:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+}
+
+.eg-sort-option--active {
+  background: rgba(99, 102, 241, 0.14);
+  color: #a5b4fc;
+}
+
+.eg-sort-option--active:hover {
+  background: rgba(99, 102, 241, 0.22);
+}
+
+.eg-sort-option-label {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.eg-sort-option-check {
+  flex-shrink: 0;
+  color: #818cf8;
+}
+
 
 .entries-glance-body {
   flex: 1;
@@ -4279,12 +4412,12 @@ body {
 .eg-date-pill {
   display: inline-flex;
   align-items: center;
-  padding: 2px 7px;
+  padding: 2px 8px;
   border-radius: 9999px;
   background: rgba(99, 102, 241, 0.13);
   border: 1px solid rgba(99, 102, 241, 0.28);
   color: #a5b4fc;
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   line-height: 1.3;
@@ -4295,12 +4428,12 @@ body {
 .eg-time-pill {
   display: inline-flex;
   align-items: center;
-  padding: 2px 7px;
+  padding: 2px 8px;
   border-radius: 9999px;
   background: rgba(20, 184, 166, 0.12);
   border: 1px solid rgba(20, 184, 166, 0.28);
   color: #5eead4;
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   line-height: 1.3;
@@ -5511,7 +5644,7 @@ body {
 }
 
 [data-theme="light"] .entries-glance-subtitle {
-  color: #64748b;
+  color: #b45309;
 }
 
 [data-theme="light"] .entries-glance-close-btn {
@@ -6085,7 +6218,59 @@ body {
   color: var(--grp-color, #0891b2);
 }
 
+
 [data-theme="light"] .entries-glance-group-empty {
   color: #94a3b8;
+}
+
+/* ─── Sort button — light theme ─────────────────────────────────── */
+[data-theme="light"] .eg-sort-btn {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  color: #94a3b8;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+[data-theme="light"] .eg-sort-btn:hover {
+  background: #f1f5f9;
+  border-color: rgba(15, 23, 42, 0.18);
+  color: #475569;
+}
+
+[data-theme="light"] .eg-sort-btn--open,
+[data-theme="light"] .eg-sort-btn--active {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.28);
+  color: #6366f1;
+}
+
+[data-theme="light"] .eg-sort-dropdown {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  box-shadow:
+    0 8px 28px rgba(15, 23, 42, 0.14),
+    0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="light"] .eg-sort-option {
+  color: #64748b;
+}
+
+[data-theme="light"] .eg-sort-option:hover {
+  background: rgba(15, 23, 42, 0.04);
+  color: #1e293b;
+}
+
+[data-theme="light"] .eg-sort-option--active {
+  background: rgba(99, 102, 241, 0.08);
+  color: #4f46e5;
+}
+
+[data-theme="light"] .eg-sort-option--active:hover {
+  background: rgba(99, 102, 241, 0.14);
+}
+
+[data-theme="light"] .eg-sort-option-check {
+  color: #6366f1;
 }
 
