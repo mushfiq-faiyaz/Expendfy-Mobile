@@ -716,11 +716,32 @@ function EntryRow({
 
   return (
     <li className={`entries-glance-item ${item.isWrongDay ? 'entry-item--backdated' : ''}`.trim()}>
-      {/* Left: Type Badge & Category */}
-      <div className="entries-glance-item-left">
-        {/* Type Badge */}
+
+      {/* Row 1: category icon + name */}
+      <div className="entries-glance-top-row">
         <span
-          className={`entries-glance-type-badge ${
+          className="entries-glance-cat-icon"
+          style={{
+            background: item.categoryBg,
+            border: `1px solid ${item.categoryBorder}`,
+            color: item.categoryColor,
+          }}
+          aria-hidden="true"
+        >
+          {IconComponent ? (
+            <IconComponent size={14} strokeWidth={2.2} />
+          ) : (
+            <HelpCircle size={14} strokeWidth={2.2} />
+          )}
+        </span>
+        <span className="entries-glance-cat-name">{item.categoryLabel}</span>
+      </div>
+
+      {/* Row 2: badge | Input on + stacked time/date | date chip | amount */}
+      <div className="entries-glance-bottom-row">
+        {/* EXPENSE / INCOME badge — smaller */}
+        <span
+          className={`entries-glance-type-badge entries-glance-type-badge--sm ${
             isExpense
               ? 'entries-glance-type-badge--expense'
               : 'entries-glance-type-badge--income'
@@ -728,57 +749,35 @@ function EntryRow({
         >
           {isExpense ? (
             <>
-              <ArrowDownLeft size={11} strokeWidth={2.4} />
+              <ArrowDownLeft size={9} strokeWidth={2.4} />
               <span>Expense</span>
             </>
           ) : (
             <>
-              <ArrowUpRight size={11} strokeWidth={2.4} />
+              <ArrowUpRight size={9} strokeWidth={2.4} />
               <span>Income</span>
             </>
           )}
         </span>
 
-        {/* Category Icon & Category Label */}
-        <div className="entries-glance-category">
-          <span
-            className="entries-glance-cat-icon"
-            style={{
-              background: item.categoryBg,
-              border: `1px solid ${item.categoryBorder}`,
-              color: item.categoryColor,
-            }}
-            aria-hidden="true"
-          >
-            {IconComponent ? (
-              <IconComponent size={14} strokeWidth={2.2} />
-            ) : (
-              <HelpCircle size={14} strokeWidth={2.2} />
-            )}
-          </span>
-          <div className="entries-glance-cat-text">
-            <span className="entries-glance-cat-name">{item.categoryLabel}</span>
-            {inputParts && (
-              <span className={`eg-input-row${tinted ? ' eg-input-row--tinted' : ''}`}>
-                <span className="eg-input-label">Input on</span>
-                <span className="eg-input-stack">
-                  <span className="eg-input-time">
-                    <Clock size={9} strokeWidth={2} aria-hidden="true" />
-                    {inputParts.time}
-                  </span>
-                  <span className="eg-input-date">
-                    <CalendarDays size={9} strokeWidth={2} aria-hidden="true" />
-                    {inputParts.date}
-                  </span>
-                </span>
+        {/* Input on + vertically stacked time / date */}
+        {inputParts && (
+          <span className={`eg-input-row${tinted ? ' eg-input-row--tinted' : ''}`}>
+            <span className="eg-input-label">Input on</span>
+            <span className="eg-input-stack">
+              <span className="eg-input-time">
+                <Clock size={9} strokeWidth={2} aria-hidden="true" />
+                {inputParts.time}
               </span>
-            )}
-          </div>
-        </div>
-      </div>
+              <span className="eg-input-date">
+                <CalendarDays size={9} strokeWidth={2} aria-hidden="true" />
+                {inputParts.date}
+              </span>
+            </span>
+          </span>
+        )}
 
-      {/* Right: Date badge & Amount */}
-      <div className="entries-glance-item-right">
+        {/* Date chip */}
         {showDate && item.dateIso && (() => {
           const d = new Date(item.dateIso + 'T12:00:00')
           const thisYear = new Date().getFullYear()
@@ -788,12 +787,10 @@ function EntryRow({
           const label = entryYear === thisYear
             ? `${day} ${mon}`
             : `${day} ${mon} '${String(entryYear).slice(2)}`
-          return (
-            <div className="eg-meta-pills">
-              <span className="eg-date-pill">{label}</span>
-            </div>
-          )
+          return <span className="eg-date-pill">{label}</span>
         })()}
+
+        {/* Amount — pushed to far right */}
         <span
           className={`entries-glance-amount ${
             isExpense

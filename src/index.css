@@ -4354,26 +4354,51 @@ body {
 
 .entries-glance-item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   padding: 10px 12px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 12px;
   transition: background 0.12s ease;
-  gap: 8px;
+  gap: 6px;
 }
 
 .entries-glance-item:hover {
   background: rgba(255, 255, 255, 0.05);
 }
 
-.entries-glance-item-left {
+/* ── Row 1: icon + category name ── */
+.entries-glance-top-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
+  min-width: 0;
+}
+
+/* ── Row 2: badge | Input on + stacked boxes | date chip | amount ── */
+.entries-glance-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* legacy helper — kept for any existing references */
+.entries-glance-item-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
   min-width: 0;
   flex: 1;
+}
+
+.entries-glance-main-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  width: 100%;
 }
 
 .entries-glance-type-badge {
@@ -4389,6 +4414,14 @@ body {
   flex-shrink: 0;
 }
 
+/* Smaller badge variant used in the bottom row */
+.entries-glance-type-badge--sm {
+  padding: 1.5px 5px;
+  font-size: 0.6rem;
+  gap: 2px;
+  align-self: center;
+}
+
 .entries-glance-type-badge--expense {
   background: rgba(244, 63, 94, 0.15);
   border: 1px solid rgba(244, 63, 94, 0.3);
@@ -4399,14 +4432,6 @@ body {
   background: rgba(34, 197, 94, 0.15);
   border: 1px solid rgba(34, 197, 94, 0.3);
   color: #4ade80;
-}
-
-.entries-glance-category {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  min-width: 0;
-  flex: 1;
 }
 
 .entries-glance-cat-icon {
@@ -4432,25 +4457,19 @@ body {
   padding: 0;
 }
 
-.entries-glance-cat-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  gap: 1px;
-  justify-content: center;
-}
-
-/* ── Input timestamp stacked boxes ── */
+/* ── Input timestamp: "Input on" label + vertically stacked time/date ── */
 .eg-input-row {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  align-self: center;
+  gap: 5px;
+  flex-shrink: 0;
 }
 
 .eg-input-label {
   font-size: 0.6rem;
   font-weight: 500;
-  color: #64748b;           /* neutral slate — overridden to red on --tinted */
+  color: #64748b;
   letter-spacing: 0.01em;
   line-height: 1.2;
   white-space: nowrap;
@@ -4514,7 +4533,8 @@ body {
 .eg-date-pill {
   display: inline-flex;
   align-items: center;
-  padding: 1px 5px;
+  align-self: center;
+  padding: 2px 7px;
   border-radius: 9999px;
   background: rgba(99, 102, 241, 0.13);
   border: 1px solid rgba(99, 102, 241, 0.28);
@@ -4554,6 +4574,9 @@ body {
   font-size: 0.92rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  margin-left: auto;
+  align-self: center;
+  flex-shrink: 0;
 }
 
 .entries-glance-amount--expense {
