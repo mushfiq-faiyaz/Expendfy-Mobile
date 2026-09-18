@@ -1,5 +1,6 @@
 import { Clock } from 'lucide-react'
 import { ExpendfyLogo } from './ExpendfyLogo'
+import { BrandWordmark } from './BrandWordmark'
 import { useNetworkTime } from '../networkTime'
 
 type Props = {
@@ -59,7 +60,7 @@ export function Header({
       <div className="app-header__row">
         <div className="app-header__brand">
           <ExpendfyLogo size={40} />
-          <span className="app-header__title">Expendfy</span>
+          <BrandWordmark size="md" layout="stacked" />
         </div>
 
         {/* Live time pill */}

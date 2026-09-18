@@ -12,9 +12,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon-192.png', 'icon-512.png', 'favicon.svg'],
       manifest: {
-        name: 'Expendfy',
-        short_name: 'Expendfy',
-        description: 'Personal Expense Tracker',
+        name: 'Expendfy Persona',
+        short_name: 'Expendfy Persona',
+        description: 'Expendfy Persona - Personal Expense Tracker',
         theme_color: '#0f0f0f',
         background_color: '#0f0f0f',
         display: 'standalone',

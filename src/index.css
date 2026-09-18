@@ -97,6 +97,122 @@ body {
   color: #f8fafc;
 }
 
+/* ── Branded Wordmark: 'Expendfy' + stylized 'Persona' ─────────── */
+.brand-wordmark {
+  user-select: none;
+}
+
+.brand-wordmark--stacked {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  line-height: 1;
+}
+
+.brand-wordmark--inline {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 5px;
+  line-height: 1;
+}
+
+.brand-wordmark__title {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #f8fafc;
+  line-height: 1.05;
+}
+
+.brand-wordmark__persona {
+  font-family: 'Caveat', 'Satisfy', cursive, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 0.95;
+  color: #38bdf8;
+  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.brand-wordmark--sm .brand-wordmark__title {
+  font-size: 0.95rem;
+}
+.brand-wordmark--sm .brand-wordmark__persona {
+  font-size: 0.95rem;
+  margin-top: -1px;
+}
+
+.brand-wordmark--md .brand-wordmark__title {
+  font-size: 1.12rem;
+}
+.brand-wordmark--md .brand-wordmark__persona {
+  font-size: 1.05rem;
+  margin-top: -2px;
+}
+
+.brand-wordmark--lg .brand-wordmark__title {
+  font-size: 1.45rem;
+}
+.brand-wordmark--lg .brand-wordmark__persona {
+  font-size: 1.35rem;
+  margin-top: -3px;
+}
+
+.brand-wordmark--hero .brand-wordmark__title {
+  font-size: 2rem;
+  letter-spacing: -0.03em;
+}
+.brand-wordmark--hero .brand-wordmark__persona {
+  font-size: 1.75rem;
+  margin-top: -2px;
+}
+
+/* ── Splash Screen ───────────────────────────────────────────────── */
+.splash-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s ease;
+  pointer-events: auto;
+}
+
+.splash-overlay--fadingout {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  animation: splashEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.splash-logo-wrap {
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.45));
+}
+
+@keyframes splashEntrance {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 /* ── Summary card ────────────────────────────────────────────────── */
 .app-header__meta {
   margin-top: 10px;
@@ -1135,6 +1251,12 @@ body {
   color: #f1f5f9;
 }
 
+.drawer__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .drawer__close {
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(51, 65, 85, 0.45);
@@ -1430,8 +1552,15 @@ body {
   background: rgba(255, 255, 255, 0.02);
 }
 
+.drawer__about-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
 .drawer__about-title {
-  margin: 0 0 10px;
+  margin: 0;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -4865,6 +4994,21 @@ body {
 
 [data-theme="light"] .app-header__title {
   color: #0f172a;
+}
+
+[data-theme="light"] .brand-wordmark__title {
+  color: #0f172a;
+}
+
+[data-theme="light"] .brand-wordmark__persona {
+  color: #0284c7;
+  background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .splash-overlay {
+  background: #f8fafc;
 }
 
 [data-theme="light"] .app-header__menu {

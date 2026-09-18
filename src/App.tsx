@@ -23,6 +23,7 @@ import { EntriesGlanceModal } from './components/EntriesGlanceModal'
 import { SideDrawer } from './components/SideDrawer'
 import { ActivitySheet } from './components/ActivitySheet'
 import { EditHistoryModal } from './components/EditHistoryModal'
+import { SplashScreen } from './components/SplashScreen'
 import {
   loadCustomExpenseCategories,
   loadCustomIncomeCategories,
@@ -1000,6 +1001,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <SplashScreen />
       <Header
         selectedDateLabel={selectedDateLabel}
         monthlySpent={monthlySpent}

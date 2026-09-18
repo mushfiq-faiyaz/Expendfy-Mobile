@@ -4,7 +4,7 @@ const SIX_HOURS_MS = 6 * 60 * 60 * 1000
 const NOTIFICATION_TAG = 'expense-reminder'
 const PERIODIC_SYNC_TAG = 'expense-reminder-6h'
 const LAST_NOTIFICATION_KEY = 'expendfy_last_notification_at'
-const NOTIFICATION_TITLE = 'Expendfy Reminder'
+const NOTIFICATION_TITLE = 'Expendfy Persona Reminder'
 const NOTIFICATION_BODY = "Don't forget to log your expenses! 💸"
 const NOTIFICATION_ICON = '/icon-192.png'
 

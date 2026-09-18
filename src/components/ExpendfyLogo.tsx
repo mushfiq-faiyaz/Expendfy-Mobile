@@ -2,7 +2,7 @@ export function ExpendfyLogo({ size = 40 }: { size?: number }) {
   return (
     <img
       src="/expendfy-logo.png"
-      alt="Expendfy logo"
+      alt="Expendfy Persona logo"
       width={size}
       height={size}
       className="expendfy-logo"

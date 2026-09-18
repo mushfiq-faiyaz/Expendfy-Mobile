@@ -7,7 +7,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0f0f0f" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <title>Expendfy</title>
+    <title>Expendfy Persona</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Satisfy&display=swap" rel="stylesheet" />
     <script>
       (function () {
         try {
@@ -22,7 +25,15 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="initial-splash" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0f172a;color:#f8fafc;font-family:system-ui,-apple-system,sans-serif;z-index:99999;">
+        <img src="/expendfy-logo.png" alt="Expendfy Persona logo" width="64" height="64" style="border-radius:14px;object-fit:contain;box-shadow:0 10px 25px rgba(0,0,0,0.35);" />
+        <div style="margin-top:14px;display:flex;flex-direction:column;align-items:center;">
+          <span style="font-size:1.35rem;font-weight:700;letter-spacing:-0.02em;line-height:1.2;">Expendfy</span>
+          <span style="font-family:'Caveat',cursive;font-size:1.15rem;font-weight:700;color:#38bdf8;letter-spacing:0.04em;line-height:1;margin-top:2px;">Persona</span>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

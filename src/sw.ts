@@ -5,7 +5,7 @@ import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
 
 declare const self: ServiceWorkerGlobalScope
 
-const NOTIFICATION_TITLE = 'Expendfy Reminder'
+const NOTIFICATION_TITLE = 'Expendfy Persona Reminder'
 const NOTIFICATION_TAG = 'expense-reminder'
 const PERIODIC_SYNC_TAG = 'expense-reminder-6h'
 

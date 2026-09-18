@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { ChevronDown, History } from 'lucide-react'
 import { getCurrencyInfo } from '../currencies'
 import { CurrencyPicker } from './CurrencyPicker'
+import { ExpendfyLogo } from './ExpendfyLogo'
+import { BrandWordmark } from './BrandWordmark'
 import type { ThemeMode } from '../types'
 
 type Props = {
@@ -40,7 +42,10 @@ export function SideDrawer({
       <button type="button" className="drawer__backdrop" onClick={onClose} aria-label="Close menu" />
       <aside className="drawer" role="dialog" aria-modal>
         <div className="drawer__header">
-          <span>Menu</span>
+          <div className="drawer__brand">
+            <ExpendfyLogo size={32} />
+            <BrandWordmark size="sm" layout="stacked" />
+          </div>
           <button type="button" className="drawer__close" onClick={onClose} aria-label="Close">
             ×
           </button>
@@ -131,9 +136,12 @@ export function SideDrawer({
         </div>
 
         <div className="drawer__about">
-          <p className="drawer__about-title">About</p>
+          <div className="drawer__about-header">
+            <p className="drawer__about-title">About</p>
+            <BrandWordmark size="sm" layout="inline" />
+          </div>
           <p className="drawer__about-text">
-            Expendfy is a personal expense tracking app designed to help you stay on top of your spending  simply and
+            Expendfy Persona is a personal expense tracking app designed to help you stay on top of your spending simply and
             visually.
             <br />
             Built with focus, shipped with purpose.
