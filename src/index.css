@@ -984,7 +984,9 @@ body {
 
 /* The visible circle inside each dot */
 .day-cell-badge-dot__circle {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 7px;
   height: 7px;
   border-radius: 9999px;
@@ -993,10 +995,23 @@ body {
   flex-shrink: 0;
 }
 
+/* Count label inside the dot — kept tiny to fit inside 7px circle */
+.day-cell-badge-dot__count {
+  font-size: 4.5px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  user-select: none;
+  pointer-events: none;
+}
+
 /* Amber — backdated entries */
 .day-cell-badge-dot--backdated .day-cell-badge-dot__circle {
   background-color: #f59e0b;
   box-shadow: 0 0 5px rgba(245, 158, 11, 0.65), 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.day-cell-badge-dot--backdated .day-cell-badge-dot__count {
+  color: #4a2900; /* dark brown — high contrast on amber */
 }
 .day-cell-badge-dot--backdated:hover .day-cell-badge-dot__circle {
   transform: scale(1.2);
@@ -1007,6 +1022,9 @@ body {
 .day-cell-badge-dot--edited .day-cell-badge-dot__circle {
   background-color: #a855f7;
   box-shadow: 0 0 5px rgba(168, 85, 247, 0.75), 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.day-cell-badge-dot--edited .day-cell-badge-dot__count {
+  color: #fff; /* white — high contrast on purple */
 }
 .day-cell-badge-dot--edited:hover .day-cell-badge-dot__circle {
   transform: scale(1.2);

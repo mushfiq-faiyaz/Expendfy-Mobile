@@ -43,6 +43,7 @@ function BadgeDot({ badge }: DotProps) {
     ? 'day-cell-badge-dot day-cell-badge-dot--backdated'
     : 'day-cell-badge-dot day-cell-badge-dot--edited'
   const ariaLabel = isBackdated ? 'Backdated entry indicator' : 'Edited entry indicator'
+  const count = badge.lines.length
 
   return (
     <div
@@ -51,7 +52,9 @@ function BadgeDot({ badge }: DotProps) {
       aria-hidden="true"
       style={{ pointerEvents: 'none' }}
     >
-      <span className="day-cell-badge-dot__circle" aria-hidden="true" />
+      <span className="day-cell-badge-dot__circle" aria-hidden="true">
+        <span className="day-cell-badge-dot__count">{count}</span>
+      </span>
     </div>
   )
 }
